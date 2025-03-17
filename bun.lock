@@ -15,6 +15,7 @@
         "expo-linking": "~7.0.5",
         "expo-router": "~4.0.19",
         "expo-splash-screen": "~0.29.22",
+        "expo-sqlite": "^15.1.2",
         "expo-status-bar": "~2.0.1",
         "expo-symbols": "~0.2.2",
         "expo-system-ui": "~4.0.8",
@@ -28,6 +29,7 @@
         "react-native-screens": "~4.4.0",
         "react-native-web": "~0.19.13",
         "react-native-webview": "13.12.5",
+        "tinybase": "^5.4.9",
       },
       "devDependencies": {
         "@babel/core": "^7.25.2",
@@ -902,6 +904,8 @@
 
     "expo-splash-screen": ["expo-splash-screen@0.29.22", "", { "dependencies": { "@expo/prebuild-config": "^8.0.27" }, "peerDependencies": { "expo": "*" } }, "sha512-f+bPpF06bqiuW1Fbrd3nxeaSsmTVTBEKEYe3epYt4IE6y4Ulli3qEUamMLlRQiDGuIXPU6zQlscpy2mdBUI5cA=="],
 
+    "expo-sqlite": ["expo-sqlite@15.1.2", "", { "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-xe+v56ts6GWJoNXLpWBQJmIPd7K1Bk9tmWc2b0nV5yUjqXZX3lbTYm8QhXEqUJxYu87o2GSkNqAqNKeDbMUXGQ=="],
+
     "expo-status-bar": ["expo-status-bar@2.0.1", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-AkIPX7jWHRPp83UBZ1iXtVvyr0g+DgBVvIXTtlmPtmUsm8Vq9Bb5IGj86PW8osuFlgoTVAg7HI/+Ok7yEYwiRg=="],
 
     "expo-symbols": ["expo-symbols@0.2.2", "", { "dependencies": { "sf-symbols-typescript": "^2.0.0" }, "peerDependencies": { "expo": "*" } }, "sha512-yTk1MxhA61YflYIMortImD57MCneKEoSvU1acqQ4oKigV5+cNw1XKB7GhcKe3d8Ny3ikC/b1Ia+HQjR0Hmr4JA=="],
@@ -1691,6 +1695,8 @@
     "throat": ["throat@5.0.0", "", {}, "sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA=="],
 
     "through": ["through@2.3.8", "", {}, "sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg=="],
+
+    "tinybase": ["tinybase@5.4.9", "", { "peerDependencies": { "@automerge/automerge-repo": "^1.2.1", "@cloudflare/workers-types": "^4.20250312.0", "@electric-sql/pglite": "^0.2.17", "@libsql/client": "^0.14.0", "@powersync/common": "^1.25.0", "@sqlite.org/sqlite-wasm": "^3.49.1-build2", "@vlcn.io/crsqlite-wasm": "^0.16.0", "electric-sql": "^0.12.1", "expo": "^52.0.4", "expo-sqlite": "^15.1.2", "partykit": "^0.0.111", "partysocket": "^1.0.2", "postgres": "^3.4.5", "prettier": "^3.5.3", "react": "^18.2.0", "react-dom": "^18.2.0", "sqlite3": "^5.1.7", "ws": "^8.18.1", "yjs": "^13.6.24" }, "optionalPeers": ["@automerge/automerge-repo", "@cloudflare/workers-types", "@electric-sql/pglite", "@libsql/client", "@powersync/common", "@sqlite.org/sqlite-wasm", "@vlcn.io/crsqlite-wasm", "electric-sql", "expo", "expo-sqlite", "partykit", "partysocket", "postgres", "prettier", "react", "react-dom", "sqlite3", "ws", "yjs"], "bin": { "tinybase": "cli/index.js" } }, "sha512-sRXRqe/m6TEWrNZRDF/9JEbQoBTqDYsYQjz3uLQWwpQmhxFKydq2tb+yofzeMLFlj+b/m1TpUSbk8XBv8s7Fnw=="],
 
     "tmp": ["tmp@0.0.33", "", { "dependencies": { "os-tmpdir": "~1.0.2" } }, "sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw=="],
 
