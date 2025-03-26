@@ -1,74 +1,156 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
+import React from 'react';
+import TitleComponent from '@/app/components/titleComponent';
+import { router } from 'expo-router';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function Index() {
+  const [viewGlosario, setViewGlosario] = React.useState(false);
+  const redirectToJugador = () => {
+    router.push('/jugador');
+  }
 
-export default function HomeScreen() {
+  const redirectToPartidos = () => {
+    router.push('/partidos');
+  }
+
+  const redirectToHistorial = () => {
+    router.push('/historial');
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <>
+      <TitleComponent title="General" />
+      <View style={styles.container}>
+        <View style={styles.textArea}>
+          <Text style={styles.subtitle}>Bienvenido a HoopStats!</Text>
+        </View>
+        <View style={styles.textArea}>
+          <TouchableOpacity onPress={redirectToJugador}>
+            <Text style={styles.text}>
+              Para ver las estadísticas de un jugador, o para crear uno.
+              <Text style={[styles.enfasis]}> Toque aquí </Text>
+              o toque el libro en el apartado debajo.
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.textArea}>
+          <TouchableOpacity onPress={redirectToPartidos}>
+            <Text style={styles.text}>
+              Para ingresar estadísticas de un partido.
+              <Text style={[styles.enfasis]}> Toque aqui </Text>
+              o toque la copa en el apartado debajo.
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.textArea}>
+          <TouchableOpacity onPress={redirectToHistorial}>
+            <Text style={styles.text}>
+              Para ver todo el historial de partidos de un jugador.
+              <Text style={styles.enfasis}> Toque aqui </Text>
+              o toque la urna con una flecha apuntando hacia abajo en el apartado debajo.
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {viewGlosario &&
+          <TouchableOpacity style={styles.glosario} onPress={() => setViewGlosario(false)}>
+            <Text style={styles.title}>Glosario</Text>
+            <Text style={styles.definition}>PJ: Partidos Jugados</Text>
+            <Text style={styles.definition}>TL: Tiros Libres anotados por partido</Text>
+            <Text style={styles.definition}>2PTS: Dobles por partido</Text>
+            <Text style={styles.definition}>FC: Faltas Cometidas</Text>
+            <Text style={styles.definition}>3PTS: Triples por partido</Text>
+            <Text style={styles.definition}>REB: Rebotes por partido</Text>
+            <Text style={styles.definition}>%TL: % de Tiros Libre anotados</Text>
+            <Text style={styles.definition}>MIP: Minutos por partido</Text>
+            <Text style={styles.definition}>PUN: Puntos totales</Text>
+            <Text style={styles.definition}>TC%: % de tiros convertidos</Text>
+            <Text style={styles.definition}>ASI: Asistencias por partido</Text>
+            <Text style={styles.definition}>ROB: Robos por partido</Text>
+          </TouchableOpacity>
+        }
+        <TouchableOpacity
+          style={styles.helpButton}
+          onPress={() => setViewGlosario(true)}
+        >
+          <Text style={styles.helpButtonText}>?</Text>
+        </TouchableOpacity>
+
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: Colors.appBackground,
     alignItems: 'center',
-    gap: 8,
+    padding: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  textArea: {
+    backgroundColor: Colors.menuBackground,
+    height: 'auto',
+    width: '90%',
+    borderRadius: 15,
+    padding: 15,
+    margin: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  subtitle: {
+    color: Colors.barDownBackground,
+    fontSize: 26,
+    fontWeight: 'bold',
+    fontFamily: 'Roboto',
+  },
+  text: {
+    color: Colors.text,
+    fontSize: 14,
+    textAlign: 'center', // Add this line to center text horizontally
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  enfasis: {
+    color: Colors.buttonBackground,
+  },
+  helpButton: {
     position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: Colors.menuBackground,
+    width: 75,
+    height: 75,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpButtonText: {
+    color: Colors.text,
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  glosario: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  title: {
+    fontSize: 40,
+    fontFamily: 'Oswald',
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: Colors.text,
+    borderBottomWidth: 1,
+    borderColor: Colors.barDownBackground,
+  },
+  definition: {
+    fontSize: 18,
+    color: Colors.text,
   },
 });
