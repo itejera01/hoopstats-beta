@@ -1,7 +1,7 @@
 import React from 'react';
 import { Colors } from '@/constants/Colors';
 import { StyleSheet, TouchableOpacity, Text, View, ScrollView } from 'react-native';
-import TitleComponent from '@/app/components/titleComponent';
+import TitleComponent from '@/components/titleComponent';
 
 
 export default function Historial() {

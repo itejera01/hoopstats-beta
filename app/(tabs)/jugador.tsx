@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Colors } from '@/constants/Colors';
 import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image } from 'react-native';
-import TitleComponent from '@/app/components/titleComponent';
+import TitleComponent from '@/components/titleComponent';
 
 export default function Jugador() {
 
