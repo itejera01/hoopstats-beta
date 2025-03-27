@@ -1,6 +1,13 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Slot, Stack } from 'expo-router';
+import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { tokenCache } from '@/cache';
 
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  throw new Error('CLERK_PUBLISHABLE_KEY is not set');
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -8,12 +15,12 @@ export default function RootLayout() {
     Oswald: require('../assets/fonts/Oswald-VariableFont_wght.ttf'),
   });
   return (
-    <>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-      </Stack>
-    </>
+    <ClerkProvider publishableKey={publishableKey}
+      tokenCache={tokenCache}>
+      <ClerkLoaded>
+        <Slot />
+      </ClerkLoaded>
+    </ClerkProvider>
   );
 }
 

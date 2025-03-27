@@ -1,17 +1,38 @@
+import * as SQLite from "expo-sqlite";
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image, FlatList } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Equipos } from '@/constants/Equipos';
+import { useCreateMergeableStore, useCreatePersister, useProvideStore, useSortedRowIds, useStore } from 'tinybase/ui-react';
+import { createMergeableStore } from 'tinybase/mergeable-store';
+import { createExpoSqlitePersister } from 'tinybase/persisters/persister-expo-sqlite';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
 import TitleComponent from '@/components/titleComponent';
 import JugadorComponent from '@/components/jugadorComponent';
+
 interface Posicion {
   label: string;
   value: string;
 }
 
+const TABLE_NAME = "jugadores";
+
+const NOMBRE_CELL = "nombre";
+const EDAD_CELL = "edad";
+const POSICION_CELL = "posicion";
+const EQUIPO_CELL = "equipo";
+const TORNEO_CELL = "torneo";
+
 export default function Jugador() {
+  const store = useCreateMergeableStore(() => createMergeableStore());
+  useCreatePersister(store, (store) => createExpoSqlitePersister(store, SQLite.openDatabaseSync("hoopStats.db")),
+    [],
+    // @ts-ignore
+    (persister) => persister.load().then(persister.startAutoSave)
+  );
+  useProvideStore(TABLE_NAME, store);
+
   const [nombre, setNombre] = useState('');
   const [equipo, setEquipo] = useState('');
   const [edad, setEdad] = useState(0);
@@ -19,20 +40,17 @@ export default function Jugador() {
   const [modalCrearJugador, setModalCrearJugador] = useState(false);
   const [modalEquipoVisible, setModalEquipoVisible] = useState(false);
   const [modalTorneoVisible, setModalTorneoVisible] = useState(false);
-  const [jugadores, setJugadores] = useState<
-    { nombre: string; equipo: string; edad: number; torneo: string; posicion: string }[]
-  >([]);
 
   const agregarJugador = () => {
+    const store = useStore(TABLE_NAME);
     if (nombre && equipo && edad > 0 && torneo && posicion) {
-      const nuevoJugador = {
-        nombre,
-        equipo,
-        edad,
-        torneo,
-        posicion: posicion.value,
-      };
-      setJugadores([...jugadores, nuevoJugador]);
+      store?.addRow(TABLE_NAME, {
+        [NOMBRE_CELL]: nombre,
+        [EDAD_CELL]: edad,
+        [POSICION_CELL]: posicion?.value || '',
+        [EQUIPO_CELL]: equipo,
+        [TORNEO_CELL]: torneo,
+      })
       alert('Jugador creado correctamente.');
       cancelarCreacionJugador();
     } else {
@@ -64,17 +82,24 @@ export default function Jugador() {
       <TitleComponent title="Jugador" />
       <View style={styles.main}>
         <FlatList
-          data={jugadores}
-          renderItem={({ item }) => (
-            <JugadorComponent 
-              nombre={item.nombre}
-              equipo={item.equipo} 
-              torneo={item.torneo}
-              edad={item.edad}
-              posicion={item.posicion}
-            />
-          )}
-          keyExtractor={(item) => item.nombre}
+          data={store?.getRowIds(TABLE_NAME) || []}
+          renderItem={({ item: id }) => {
+            const jugador = store?.getRow(TABLE_NAME, id);
+            const nombre = jugador?.[NOMBRE_CELL];
+            const equipo = jugador?.[EQUIPO_CELL];
+            const torneo = jugador?.[TORNEO_CELL];
+            const edad = jugador?.[EDAD_CELL];
+            const posicion = jugador?.[POSICION_CELL];
+            return (
+              <View>
+                <Text>{nombre}</Text>
+                <Text>{edad}</Text>
+                <Text>{posicion}</Text>
+                <Text>{equipo}</Text>
+                <Text>{torneo}</Text>
+              </View>
+            )
+          }}
         />
         {modalCrearJugador && (
           <View style={styles.modalContainer}>

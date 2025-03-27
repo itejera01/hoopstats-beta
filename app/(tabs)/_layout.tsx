@@ -2,10 +2,12 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { Provider as TinyBaseProvider } from 'tinybase/ui-react';
+
 
 export default function TabLayout() {
   return (
-    <>
+    <TinyBaseProvider>
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: Colors.selected,
@@ -73,6 +75,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </>
+    </TinyBaseProvider>
   );
 }
