@@ -113,6 +113,8 @@ const styles = StyleSheet.create({
   },
   enfasis: {
     color: Colors.buttonBackground,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
   helpButton: {
     position: 'absolute',

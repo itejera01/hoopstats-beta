@@ -1,110 +1,117 @@
 import React, { useState } from 'react';
+import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image, FlatList } from 'react-native';
 import { Colors } from '@/constants/Colors';
-import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image } from 'react-native';
+import { Equipos } from '@/constants/Equipos';
+import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
+import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
 import TitleComponent from '@/components/titleComponent';
+interface Posicion {
+  label: string;
+  value: string;
+}
 
 export default function Jugador() {
-
   const [nombre, setNombre] = useState('');
-    const [equipo, setEquipo] = useState('');
-    const [edad, setEdad] = useState(0);
-    const [torneo, setTorneo] = useState('');
-    const [visible, setVisible] = useState(false);  
-    interface Posicion {
-      label: string;
-      value: string;
-    }
-    const posiciones: Posicion[] = [
-      { label: 'BA', value: 'Base' },
-      { label: 'ES', value: 'Escolta' },
-      { label: 'AL', value: 'Alero' },
-      { label: 'AP', value: 'Ala-Pivot' },
-      { label: 'P', value: 'Pivot' },
-    ];  
-    const [posicion, setPosicion] = useState<Posicion | null>(null);
-  
-    const cancelarCreacionJugador = () => {
-      setNombre('');
-      setEquipo('');
-      setEdad(0);
-      setTorneo('');
-      setVisible(false);
-    };
+  const [equipo, setEquipo] = useState('');
+  const [edad, setEdad] = useState(0);
+  const [torneo, setTorneo] = useState('');
+  const [modalCrearJugador, setModalCrearJugador] = useState(false);
+  const [modalEquipoVisible, setModalEquipoVisible] = useState(false);
+  const [modalTorneoVisible, setModalTorneoVisible] = useState(false);
+
+  const toggleModalCrearJugador = () => setModalCrearJugador(!modalCrearJugador);
+
+  const posiciones: Posicion[] = [
+    { label: 'BA', value: 'Base' },
+    { label: 'ES', value: 'Escolta' },
+    { label: 'AL', value: 'Alero' },
+    { label: 'AP', value: 'Ala-Pivot' },
+    { label: 'P', value: 'Pivot' },
+  ];
+  const [posicion, setPosicion] = useState<Posicion | null>(null);
+
+  const cancelarCreacionJugador = () => {
+    setNombre('');
+    setEquipo('');
+    setEdad(0);
+    setTorneo('');
+    setModalCrearJugador(!modalCrearJugador);
+  };
 
   return (
-  <>
-    <TitleComponent title="Jugador"/>    
-    <View style={styles.main}>
-    
-    {visible && (
-      <View style={styles.container}>
-        <TextInput
-        style={styles.input}
-        placeholder="Ingrese el Nombre del Jugador"
-        placeholderTextColor={Colors.text}
-        value={nombre}
-        onChangeText={(text) => setNombre(text)}
-        />
-        <TextInput
-        style={styles.input}
-        placeholder="Ingrese la Edad del Jugador"
-        placeholderTextColor={Colors.text}
-        value={edad > 0 ? String(edad) : ''}
-        onChangeText={(text) => setEdad(Number(text))}
-        keyboardType="numeric"
-        />
-        <View style={{ flexDirection: 'row' }}>
-        <View style={styles.posicion}>
-          {posiciones.map((pos) => (
-          <TouchableOpacity
-            key={pos.value}
-            style={styles.checkbox}
-            onPress={() => setPosicion(pos)}
-          >
-            <Text style={[styles.text, posicion?.value === pos.value && { color: Colors.selected }]}>
-            {pos.label}
-            </Text>
-          </TouchableOpacity>
-          ))}
-        </View>
-        </View>
-        <TextInput
-        style={styles.input}
-        placeholder="Selecciona el Equipo Del Jugador"
-        placeholderTextColor={Colors.text}
-        value={equipo}
-        onChangeText={(text) => setEquipo(text)}
-        />
-        <TextInput
-        style={styles.input}
-        placeholder="Selecciona el Torneo del Jugador"
-        placeholderTextColor={Colors.text}
-        value={torneo}
-        onChangeText={(text) => setTorneo(text)}
-        />
-    
-        {/* Por ahora son Inputs, mas adelante serán checkboxes con base de datos */}
-        <View style={styles.botones}>
-        <TouchableOpacity 
-          style={[styles.inputButton, {backgroundColor: Colors.barDownBackground}]}
-          onPress={cancelarCreacionJugador}
-          >
-          <Text style={styles.buttonText}>Cancelar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.inputButton}>
-          <Text style={styles.buttonText}>Crear jugador</Text>
-        </TouchableOpacity>
-        </View>
-      </View>
-    )}
-    </View>
-    <TouchableOpacity
-      style={styles.helpButton}
-      onPress={() => setVisible(true)}
-    >
-      <Text style={styles.helpButtonText}>+</Text>
-    </TouchableOpacity>
-  </>
+    <>
+      <TitleComponent title="Jugador" />
+      <View style={styles.main}>
+        {modalCrearJugador && (
+          <View style={styles.container}>
+            <TextInput
+              style={styles.input}
+              placeholder="Ingrese el Nombre del Jugador"
+              placeholderTextColor={Colors.text}
+              value={nombre}
+              onChangeText={(text) => setNombre(text)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Ingrese la Edad del Jugador"
+              placeholderTextColor={Colors.text}
+              value={edad > 0 ? String(edad) : ''}
+              onChangeText={(text) => setEdad(Number(text))}
+              keyboardType="numeric"
+            />
+            <View style={{ flexDirection: 'row' }}>
+              <View style={styles.posicion}>
+                {posiciones.map((pos) => (
+                  <TouchableOpacity
+                    key={pos.value}
+                    style={styles.checkbox}
+                    onPress={() => setPosicion(pos)}
+                  >
+                    <Text style={[styles.text, posicion?.value === pos.value && { color: Colors.selected }]}>
+                      {pos.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            <View style={[styles.input, styles.dropdownContainer]}>
+              <EquiposDropDownComponent
+                data={Equipos.map((equipo) => ({ Equipo: { nombre: equipo.nombre } }))}
+                onSelect={(item) => setEquipo(item)}
+              />
+            </View>
+            <View style={[styles.input, styles.dropdownContainer]}>
+              <TorneosDropDownComponent
+                data={Equipos.find((e) => e.nombre === equipo)?.torneos.map((torneo) => ({ torneos: torneo })) || []}
+                onSelect={(item) => setTorneo(item)}
+              />
+            </View>
+            <View style={styles.botones}>
+              <TouchableOpacity
+                style={[styles.inputButton, { backgroundColor: Colors.barDownBackground }]}
+                onPress={() => cancelarCreacionJugador()}
+              >
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+                <TouchableOpacity
+                style={styles.inputButton}
+                onPress={() => {
+                  alert(`Jugador creado:\nNombre: ${nombre}\nEquipo: ${equipo}\nEdad: ${edad}\nTorneo: ${torneo}\nPosición: ${posicion?.value}`);
+                }}
+                >
+                <Text style={styles.buttonText}>Crear jugador</Text>
+                </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View >
+      <TouchableOpacity
+        style={styles.helpButton}
+        onPress={() => toggleModalCrearJugador()}
+      >
+        <Text style={styles.helpButtonText}>+</Text>
+      </TouchableOpacity>
+    </>
   )
 }
 
@@ -150,6 +157,10 @@ const styles = StyleSheet.create({
     borderRadius: 8, // Bordes redondeados
     paddingHorizontal: 10, // Espacio interno
   },
+  dropdownInput: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   botones: {
     flexDirection: 'row',
     justifyContent: 'space-between', // Espaciado uniforme entre botones
@@ -191,6 +202,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     color: Colors.text,
+    textAlign: 'center',
   },
   helpButton: {
     position: 'absolute',
@@ -207,5 +219,30 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 32,
     fontWeight: 'bold',
+  },
+  dropdownContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  dropdownLabel: {
+    fontSize: 16,
+    color: Colors.text,
+    marginBottom: 5,
+  },
+  dropdown: {
+    maxHeight: 150,
+    backgroundColor: Colors.menuBackground,
+    borderRadius: 8,
+    padding: 10,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.barDownBackground,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: Colors.text,
   },
 });
