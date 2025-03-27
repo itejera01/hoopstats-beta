@@ -5,6 +5,7 @@ import { Equipos } from '@/constants/Equipos';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
 import TitleComponent from '@/components/titleComponent';
+import JugadorComponent from '@/components/jugadorComponent';
 interface Posicion {
   label: string;
   value: string;
@@ -18,6 +19,26 @@ export default function Jugador() {
   const [modalCrearJugador, setModalCrearJugador] = useState(false);
   const [modalEquipoVisible, setModalEquipoVisible] = useState(false);
   const [modalTorneoVisible, setModalTorneoVisible] = useState(false);
+  const [jugadores, setJugadores] = useState<
+    { nombre: string; equipo: string; edad: number; torneo: string; posicion: string }[]
+  >([]);
+
+  const agregarJugador = () => {
+    if (nombre && equipo && edad > 0 && torneo && posicion) {
+      const nuevoJugador = {
+        nombre,
+        equipo,
+        edad,
+        torneo,
+        posicion: posicion.value,
+      };
+      setJugadores([...jugadores, nuevoJugador]);
+      alert('Jugador creado correctamente.');
+      cancelarCreacionJugador();
+    } else {
+      alert('Por favor, complete todos los campos antes de crear un jugador.');
+    }
+  };
 
   const toggleModalCrearJugador = () => setModalCrearJugador(!modalCrearJugador);
 
@@ -42,8 +63,21 @@ export default function Jugador() {
     <>
       <TitleComponent title="Jugador" />
       <View style={styles.main}>
+        <FlatList
+          data={jugadores}
+          renderItem={({ item }) => (
+            <JugadorComponent 
+              nombre={item.nombre}
+              equipo={item.equipo} 
+              torneo={item.torneo}
+              edad={item.edad}
+              posicion={item.posicion}
+            />
+          )}
+          keyExtractor={(item) => item.nombre}
+        />
         {modalCrearJugador && (
-          <View style={styles.container}>
+          <View style={styles.modalContainer}>
             <TextInput
               style={styles.input}
               placeholder="Ingrese el Nombre del Jugador"
@@ -93,14 +127,14 @@ export default function Jugador() {
               >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
-                <TouchableOpacity
+              <TouchableOpacity
                 style={styles.inputButton}
                 onPress={() => {
-                  alert(`Jugador creado:\nNombre: ${nombre}\nEquipo: ${equipo}\nEdad: ${edad}\nTorneo: ${torneo}\nPosición: ${posicion?.value}`);
+                  agregarJugador();
                 }}
-                >
+              >
                 <Text style={styles.buttonText}>Crear jugador</Text>
-                </TouchableOpacity>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -125,9 +159,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.appBackground,
     paddingHorizontal: 20, // Agrega un poco de espacio lateral
   },
-  container: {
+  modalContainer: {
     flex: 1,
     width: '100%',
+    position: 'absolute',
     maxWidth: 400, // Limita el ancho máximo para pantallas grandes
     maxHeight: '80%',
     justifyContent: 'center',

@@ -17,20 +17,18 @@ export default function Index() {
         <View style={styles.logo}>
           <Image source={logo} />
         </View>
-          <Text style={styles.title}> Login </Text>
-          <TextInput style={styles.input} onChangeText={(text) => setUser(text)} placeholderTextColor={Colors.text} placeholder='Ingrese su Usuario '/>
-          <TextInput style={styles.input} onChangeText={(text) => setPassword(text)} placeholderTextColor={Colors.text} placeholder='Ingrese su Contraseña'/>
-          <TouchableOpacity>
-            <Text style={[styles.question, styles.action]}>¿Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.inputButton} onPress={login}>
-            <Text style={styles.buttonText}>Iniciar Sesion</Text>
-          </TouchableOpacity>
-          <Text style={styles.question}>¿No tienes una cuenta craeda?  
-            <TouchableOpacity>
-              <Text style={[styles.crearCuenta, styles.action]}>Ingresa aqui</Text>
-            </TouchableOpacity>
-          </Text>
+        <Text style={styles.title}> Login </Text>
+        <TextInput style={styles.input} onChangeText={(text) => setUser(text)} placeholderTextColor={Colors.text} placeholder='Ingrese su Usuario ' />
+        <TextInput style={styles.input} onChangeText={(text) => setPassword(text)} placeholderTextColor={Colors.text} placeholder='Ingrese su Contraseña' />
+        <TouchableOpacity>
+          <Text style={[styles.question, styles.action]}>¿Olvidaste tu contraseña?</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.inputButton} onPress={login}>
+          <Text style={styles.buttonText}>Iniciar Sesion</Text>
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Text style={[styles.question, styles.action]}>¿No tienes una cuenta craeda?</Text>
+        </TouchableOpacity>
       </View>
     </>
   );
@@ -54,7 +52,7 @@ const styles = StyleSheet.create({
     fontSize: 40,
     marginBottom: 20,
     fontWeight: 'bold',
-    fontFamily: 'Roboto', 
+    fontFamily: 'Roboto',
   },
   input: {
     width: '60%',
@@ -90,5 +88,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: Colors.selected,
     fontWeight: 'bold',
+    fontSize: 14,
   }
 });

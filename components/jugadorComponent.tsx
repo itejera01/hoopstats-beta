@@ -1,17 +1,20 @@
 import { Colors } from '@/constants/Colors';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
+import { TouchableOpacity } from 'react-native';
 
 const numStatsColumns = 2;
 export default function JugadorComponent(
-  { nombre, equipo, torneo, edad, posicion, partidosJugados } : 
-  { nombre: string, 
-    equipo: string, 
-    torneo: string, 
-    edad: number, 
-    posicion: string, 
-    partidosJugados: number }) 
-  {
+  { nombre, equipo, torneo, edad, posicion }:
+    {
+      nombre: string,
+      equipo: string,
+      torneo: string,
+      edad: number,
+      posicion: string,
+    }) {
+  const [showStats, setShowStats] = useState(false);
+
   const data = [
     { label: 'MIP', value: 0 },
     { label: 'PUN', value: 0 },
@@ -34,26 +37,28 @@ export default function JugadorComponent(
   );
 
   return (
-        <View style={styles.container}>
-          <View style={styles.infoJugador}>
-            <View style={styles.imageContainer}>
-              <Text style={styles.text}>(escudo)</Text>
-            </View>
-            <View>
-              <Text style={[styles.text, styles.nombre]}>{nombre}</Text>
-              <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
-              <Text style={[styles.text, styles.datosEquipo]}>{equipo}</Text>
-              <Text style={[styles.text, styles.edad]}>{edad} - {posicion} - <Text style={styles.partidosJugados}>PJ : {partidosJugados}</Text></Text>
-            </View>
-          </View>
-            <View style={styles.statsContainer}>
-            <FlatList 
-              data={data}
-              renderItem={renderStats}
-              numColumns={numStatsColumns}
-              />
-            </View>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.infoJugador} onPress={() => setShowStats(!showStats)}>
+        <View style={styles.imageContainer}>
+          <Text style={styles.text}>(escudo)</Text>
         </View>
+        <View>
+          <Text style={[styles.text, styles.nombre]}>{nombre}</Text>
+          <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
+          <Text style={[styles.text, styles.datosEquipo]}>{equipo}</Text>
+          <Text style={[styles.text, styles.edad]}>{edad} años - {posicion}</Text>
+        </View>
+      </TouchableOpacity>
+      {showStats && (
+        <View style={styles.statsContainer}>
+          <FlatList
+            data={data}
+            renderItem={renderStats}
+            numColumns={numStatsColumns}
+          />
+        </View>
+      )}
+    </View>
   )
 }
 
@@ -64,7 +69,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '75%',
+    width: '100%',
+    marginTop: 25,
   },
   infoJugador: {
     flexDirection: 'row',
