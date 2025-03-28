@@ -25,7 +25,7 @@ export default function Partidos() {
   const [equipoJugador, setEquipoJugador] = useState('');
   const [equipoRival, setEquipoRival] = useState('');
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState('');
-  const [fecha, setFecha] = useState(null);
+  const [fecha, setFecha] = useState<Date | null>(null);
   const [inicio, setInicio] = useState(null);
   const [localidad, setLocalidad] = useState('');
   const [modalCrearPartido, setModalCrearPartido] = useState(false);
@@ -65,7 +65,7 @@ export default function Partidos() {
       }
     }
     fetchPartidos();
-  }, []);
+  }, [partidos]);
 
   const toggleModalCrearPartido = () => setModalCrearPartido(!modalCrearPartido);
   const toggleFechaPicker = () => setVisibleFechaPicker(!visibleFechaPicker);
@@ -89,7 +89,7 @@ export default function Partidos() {
     setJugadorSeleccionado('');
     setEquipoJugador('');
     setEquipoRival('');
-    setFecha('');
+    setFecha(null);
     setInicio('');
     setLocalidad('');
     toggleModalCrearPartido();
@@ -100,7 +100,7 @@ export default function Partidos() {
     setJugadorSeleccionado('');
     setEquipoJugador('');
     setEquipoRival('');
-    setFecha('');
+    setFecha(null);
     setInicio('');
     setLocalidad('');
     toggleModalCrearPartido();
@@ -111,8 +111,10 @@ export default function Partidos() {
       <TitleComponent title="Partidos" />
       <View style={styles.main}>
         <ScrollView>
-          {partidos.length > 0 ? (
-            partidos.map((partido) => (
+            {partidos.length > 0 ? (
+            partidos
+              .sort((a, b) => moment(a.fecha, 'DD/MM/YYYY').toDate().getTime() - moment(b.fecha, 'DD/MM/YYYY').toDate().getTime())
+              .map((partido) => (
               <PartidoComponent
                 key={partido.fecha + partido.inicio + partido.equipoJugador + partido.equipoRival}
                 fecha={partido.fecha}
@@ -123,10 +125,10 @@ export default function Partidos() {
                 torneo={partido.torneo}
                 localidad={partido.localidad}
               />
-            ))
-          ) : (
+              ))
+            ) : (
             <Text style={{ color: Colors.text }}>No hay partidos creados.</Text>
-          )}
+            )}
         </ScrollView>
         {modalCrearPartido && (
           <View style={styles.modalContainer}>
@@ -134,11 +136,11 @@ export default function Partidos() {
               <View style={[styles.input, styles.inicioInput]}>
                 <TouchableOpacity onPress={toggleFechaPicker}>
                   <TextInput
-                    placeholder="Dia"
-                    placeholderTextColor={Colors.text}
-                    value={fecha}
-                    editable={false}
-                    style={styles.text}
+                  placeholder="Fecha"
+                  placeholderTextColor={Colors.text}
+                  value={fecha ? moment(fecha).format('DD/MM/YYYY') : ''}
+                  editable={false}
+                  style={styles.text}
                   />
                 </TouchableOpacity>
               </View>
@@ -241,27 +243,26 @@ export default function Partidos() {
 
       {visibleFechaPicker && (
         <DateTimePicker
-          value={new Date()}
+          value={fecha || new Date()}
           mode="date"
-          onChange={(event, selectedDate) => {
-            toggleFechaPicker()
+          onChange={(_, selectedDate) => {
             if (selectedDate) {
-              const formattedDate = moment(selectedDate).format('DD/MM/YYYY');
-              setFecha(formattedDate);
+              setFecha(selectedDate);
             }
-          }
-          } />
+            toggleFechaPicker();
+          }}
+        />
       )}
       {visibleInicioPicker && (
         <DateTimePicker
           value={new Date()}
           mode="time"
-          onChange={(event, selectedTime) => {
-            toggleInicioPicker()
+          onChange={(_, selectedTime) => {
             if (selectedTime) {
               const formattedTime = moment(selectedTime).format('HH:mm');
               setInicio(formattedTime);
             }
+            toggleInicioPicker();
           }}
         />
       )}

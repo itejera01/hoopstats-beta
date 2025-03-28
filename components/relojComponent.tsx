@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import React, { useImperativeHandle, forwardRef, useState, useEffect } from 'react';
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export interface RelojComponentRef {
   getTime: () => { minutes: number; seconds: number };
@@ -9,6 +10,8 @@ export interface RelojComponentRef {
 const RelojComponent = forwardRef<RelojComponentRef>((_, ref) => {
   const [time, setTime] = useState({ minutes: 0, seconds: 0 });
   const [isRunning, setIsRunning] = useState(false);
+  const [isEditingMinutes, setIsEditingMinutes] = useState(false);
+  const [inputMinutes, setInputMinutes] = useState('0');
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -37,19 +40,64 @@ const RelojComponent = forwardRef<RelojComponentRef>((_, ref) => {
     getTime: () => time,
   }));
 
+  const handleMinutesSubmit = () => {
+    const parsedMinutes = parseInt(inputMinutes, 10);
+    if (!isNaN(parsedMinutes) && parsedMinutes >= 0) {
+      setTime((prev) => ({ ...prev, minutes: parsedMinutes }));
+    }
+    setIsEditingMinutes(false);
+  };
+
   return (
-    <View style={{ marginTop: 10 }}>
-      <Text style={styles.statsText}>
-        {formatTime(time.minutes)}:{formatTime(time.seconds)}
-      </Text>
-      <TouchableOpacity
-        style={[styles.stats, { backgroundColor: Colors.buttonBackground }]}
-        onPress={() => {
-          setIsRunning((prev) => !prev);
-        }}
-      >
-        <Text style={styles.statsText}>{isRunning ? 'Pausar' : 'Continuar'}</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.stats}>
+        <TouchableOpacity
+          onPress={() => {
+            setIsRunning((prev) => !prev);
+          }}
+        >
+          <Text style={styles.icons}>
+            {isRunning ? (
+              <Ionicons name={"pause"} color={Colors.selected} size={30} />
+            ) : (
+              <Ionicons name={"play"} color={Colors.menuBackground} size={30} />
+            )}
+          </Text>
+        </TouchableOpacity>
+        {isEditingMinutes ? (
+          <TextInput
+            style={styles.reloj}
+            value={inputMinutes}
+            onChangeText={setInputMinutes}
+            keyboardType="numeric"
+            onBlur={handleMinutesSubmit}
+            onSubmitEditing={handleMinutesSubmit}
+            autoFocus
+          />
+        ) : (
+          <Text
+            style={styles.reloj}
+            onPress={() => {
+              setIsEditingMinutes(true);
+              setInputMinutes(time.minutes.toString());
+            }}
+          >
+            {formatTime(time.minutes)}
+          </Text>
+        )}
+        <Text style={styles.reloj}>:</Text>
+        <Text style={styles.reloj}>{formatTime(time.seconds)}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            setIsRunning(false);
+            setTime({ minutes: 0, seconds: 0 });
+          }}
+        >
+          <Text style={styles.icons}>
+            <Ionicons name={"stop"} color={Colors.menuBackground} size={30} />
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 });
@@ -57,15 +105,27 @@ const RelojComponent = forwardRef<RelojComponentRef>((_, ref) => {
 export default RelojComponent;
 
 const styles = StyleSheet.create({
+  container: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   stats: {
     padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
+    borderRadius: 15,
     justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
     marginTop: 10,
+    backgroundColor: Colors.text,
+    maxWidth: 200,
   },
-  statsText: {
-    fontSize: 16,
-    color: Colors.text,
+  reloj: {
+    color: Colors.menuBackground,
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginHorizontal: 5,
+  },
+  icons: {
+    marginHorizontal: 5,
   },
 });
