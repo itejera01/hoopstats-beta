@@ -1,28 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants/Colors';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import TitleComponent from '@/components/titleComponent';
-
-const topStats = [
-  { label: 'Puntos', value: 30 },
-  { label: 'Rebotes', value: 12 },
-  { label: 'Asistencias', value: 8 },
-  { label: 'Robos', value: 4 },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Historial() {
+  const [partidos, setPartidos] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchPartidos = async () => {
+      try {
+        const partidosData = await AsyncStorage.getItem('partidosJugados');
+        if (partidosData) {
+          const parsedPartidos = JSON.parse(partidosData);
+          setPartidos(Array.isArray(parsedPartidos) ? parsedPartidos.flat() : []);
+        }
+      } catch (error) {
+        console.error('Error fetching partidos from AsyncStorage:', error);
+      }
+    }
+    fetchPartidos();
+  }, []);
+
   return (
     <>
       <TitleComponent title="Historial" />
       <View style={styles.container}>
-        <Text style={styles.header}>Mejores Estadísticas</Text>
         <ScrollView contentContainerStyle={styles.statsContainer}>
-          {topStats.map((stat, index) => (
-            <View key={index} style={styles.statItem}>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
-            </View>
-          ))}
+            {partidos.length > 0 ? (
+             <Text>Hola soy un placeholder</Text>
+            ) : (
+            <Text style={styles.statLabel}>No hay partidos jugados.</Text>
+            )}
         </ScrollView>
       </View>
     </>

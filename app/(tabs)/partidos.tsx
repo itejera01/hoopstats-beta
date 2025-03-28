@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Colors } from '@/constants/Colors';
 import { StyleSheet, TouchableOpacity, Text, View, ScrollView, TextInput } from 'react-native';
 import moment from 'moment';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Equipos } from '@/constants/Equipos';
@@ -77,7 +77,7 @@ export default function Partidos() {
       return;
     }
     const partido = {
-      fecha,
+      fecha: fecha ? moment(fecha).format('DD/MM/YYYY') : '',
       inicio,
       jugadorSeleccionado,
       equipoJugador,
@@ -111,24 +111,24 @@ export default function Partidos() {
       <TitleComponent title="Partidos" />
       <View style={styles.main}>
         <ScrollView>
-            {partidos.length > 0 ? (
+          {partidos.length > 0 ? (
             partidos
               .sort((a, b) => moment(a.fecha, 'DD/MM/YYYY').toDate().getTime() - moment(b.fecha, 'DD/MM/YYYY').toDate().getTime())
               .map((partido) => (
-              <PartidoComponent
-                key={partido.fecha + partido.inicio + partido.equipoJugador + partido.equipoRival}
-                fecha={partido.fecha}
-                inicio={partido.inicio}
-                jugadorSeleccionado={partido.jugadorSeleccionado}
-                equipoJugador={partido.equipoJugador}
-                equipoRival={partido.equipoRival}
-                torneo={partido.torneo}
-                localidad={partido.localidad}
-              />
+                <PartidoComponent
+                  key={partido.fecha + partido.inicio + partido.equipoJugador + partido.equipoRival}
+                  fecha={partido.fecha}
+                  inicio={partido.inicio}
+                  jugadorSeleccionado={partido.jugadorSeleccionado}
+                  equipoJugador={partido.equipoJugador}
+                  equipoRival={partido.equipoRival}
+                  torneo={partido.torneo}
+                  localidad={partido.localidad}
+                />
               ))
-            ) : (
+          ) : (
             <Text style={{ color: Colors.text }}>No hay partidos creados.</Text>
-            )}
+          )}
         </ScrollView>
         {modalCrearPartido && (
           <View style={styles.modalContainer}>
@@ -136,11 +136,11 @@ export default function Partidos() {
               <View style={[styles.input, styles.inicioInput]}>
                 <TouchableOpacity onPress={toggleFechaPicker}>
                   <TextInput
-                  placeholder="Fecha"
-                  placeholderTextColor={Colors.text}
-                  value={fecha ? moment(fecha).format('DD/MM/YYYY') : ''}
-                  editable={false}
-                  style={styles.text}
+                    placeholder="Fecha"
+                    placeholderTextColor={Colors.text}
+                    value={fecha ? moment(fecha).format('DD/MM/YYYY') : ''}
+                    editable={false}
+                    style={styles.text}
                   />
                 </TouchableOpacity>
               </View>
@@ -198,10 +198,7 @@ export default function Partidos() {
                   onPress={() => {
                     setLocalidad(equipoRival)
                     alert('Equipo Local: ' + equipoRival);
-                  }
-
-                  }
-                >
+                  }}>
                   <Text style={[styles.localidadText]}>L</Text>
                 </TouchableOpacity>
               </View>
@@ -241,31 +238,18 @@ export default function Partidos() {
         <Text style={styles.helpButtonText}>+</Text>
       </TouchableOpacity >
 
-      {visibleFechaPicker && (
-        <DateTimePicker
-          value={fecha || new Date()}
-          mode="date"
-          onChange={(_, selectedDate) => {
-            if (selectedDate) {
-              setFecha(selectedDate);
-            }
-            toggleFechaPicker();
-          }}
-        />
-      )}
-      {visibleInicioPicker && (
-        <DateTimePicker
-          value={new Date()}
-          mode="time"
-          onChange={(_, selectedTime) => {
-            if (selectedTime) {
-              const formattedTime = moment(selectedTime).format('HH:mm');
-              setInicio(formattedTime);
-            }
-            toggleInicioPicker();
-          }}
-        />
-      )}
+      <DateTimePickerModal
+        isVisible={visibleFechaPicker}
+        mode="date"
+        onConfirm={(date) => setFecha(date)}
+        onCancel={toggleFechaPicker}
+      />
+      <DateTimePickerModal
+        isVisible={visibleInicioPicker}
+        mode="time"
+        onConfirm={(time) => setInicio(moment(time).format('HH:mm'))}
+        onCancel={toggleInicioPicker}
+      />
     </>
   )
 
