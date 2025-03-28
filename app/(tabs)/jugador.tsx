@@ -1,11 +1,9 @@
 import * as SQLite from "expo-sqlite";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image, FlatList } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Equipos } from '@/constants/Equipos';
-import { useCreateMergeableStore, useCreatePersister, useProvideStore, useSortedRowIds, useStore } from 'tinybase/ui-react';
-import { createMergeableStore } from 'tinybase/mergeable-store';
-import { createExpoSqlitePersister } from 'tinybase/persisters/persister-expo-sqlite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
 import TitleComponent from '@/components/titleComponent';
@@ -16,46 +14,42 @@ interface Posicion {
   value: string;
 }
 
-const TABLE_NAME = "jugadores";
-
-const NOMBRE_CELL = "nombre";
-const EDAD_CELL = "edad";
-const POSICION_CELL = "posicion";
-const EQUIPO_CELL = "equipo";
-const TORNEO_CELL = "torneo";
-
 export default function Jugador() {
-  const store = useCreateMergeableStore(() => createMergeableStore());
-  useCreatePersister(store, (store) => createExpoSqlitePersister(store, SQLite.openDatabaseSync("hoopStats.db")),
-    [],
-    // @ts-ignore
-    (persister) => persister.load().then(persister.startAutoSave)
-  );
-  useProvideStore(TABLE_NAME, store);
-
   const [nombre, setNombre] = useState('');
   const [equipo, setEquipo] = useState('');
   const [edad, setEdad] = useState(0);
   const [torneo, setTorneo] = useState('');
+  const [jugadores, setJugadores] = useState([]);
   const [modalCrearJugador, setModalCrearJugador] = useState(false);
-  const [modalEquipoVisible, setModalEquipoVisible] = useState(false);
-  const [modalTorneoVisible, setModalTorneoVisible] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('jugadores').then((value) => {
+      if (value) {
+        setJugadores(JSON.parse(value));
+      }
+    });
+  }, [jugadores])
+
 
   const agregarJugador = () => {
-    const store = useStore(TABLE_NAME);
-    if (nombre && equipo && edad > 0 && torneo && posicion) {
-      store?.addRow(TABLE_NAME, {
-        [NOMBRE_CELL]: nombre,
-        [EDAD_CELL]: edad,
-        [POSICION_CELL]: posicion?.value || '',
-        [EQUIPO_CELL]: equipo,
-        [TORNEO_CELL]: torneo,
-      })
-      alert('Jugador creado correctamente.');
-      cancelarCreacionJugador();
-    } else {
-      alert('Por favor, complete todos los campos antes de crear un jugador.');
+    if (nombre === '' || equipo === '' || edad === 0 || torneo === '' || posicion === null) {
+      alert('Por favor complete todos los campos.');
+      return;
     }
+    const jugador = {
+      nombre,
+      equipo,
+      edad,
+      torneo,
+      posicion: posicion?.value,
+    };
+    setJugadores([...jugadores, jugador]);
+    setNombre('');
+    setEquipo('');
+    setEdad(0);
+    setTorneo('');
+    setModalCrearJugador(!modalCrearJugador);
+    AsyncStorage.setItem('jugadores', JSON.stringify([...jugadores, jugador]));
   };
 
   const toggleModalCrearJugador = () => setModalCrearJugador(!modalCrearJugador);
@@ -81,26 +75,23 @@ export default function Jugador() {
     <>
       <TitleComponent title="Jugador" />
       <View style={styles.main}>
-        <FlatList
-          data={store?.getRowIds(TABLE_NAME) || []}
-          renderItem={({ item: id }) => {
-            const jugador = store?.getRow(TABLE_NAME, id);
-            const nombre = jugador?.[NOMBRE_CELL];
-            const equipo = jugador?.[EQUIPO_CELL];
-            const torneo = jugador?.[TORNEO_CELL];
-            const edad = jugador?.[EDAD_CELL];
-            const posicion = jugador?.[POSICION_CELL];
-            return (
-              <View>
-                <Text>{nombre}</Text>
-                <Text>{edad}</Text>
-                <Text>{posicion}</Text>
-                <Text>{equipo}</Text>
-                <Text>{torneo}</Text>
-              </View>
-            )
-          }}
-        />
+        <ScrollView>
+          {jugadores.length > 0 ? (
+            jugadores.map((jugador) => (
+              <JugadorComponent
+                key={jugador.nombre + jugador.equipo}
+                nombre={jugador.nombre}
+                edad={jugador.edad}
+                posicion={jugador.posicion}
+                equipo={jugador.equipo}
+                torneo={jugador.torneo}
+              />
+            ))
+          ) : (
+            <Text style={{ color: Colors.text }}>No hay jugadores creados.</Text>
+          )}
+        </ScrollView>
+
         {modalCrearJugador && (
           <View style={styles.modalContainer}>
             <TextInput
@@ -135,12 +126,14 @@ export default function Jugador() {
             </View>
             <View style={[styles.input, styles.dropdownContainer]}>
               <EquiposDropDownComponent
+                placeholder="Selecciona el Equipo del Jugador"
                 data={Equipos.map((equipo) => ({ Equipo: { nombre: equipo.nombre } }))}
                 onSelect={(item) => setEquipo(item)}
               />
             </View>
             <View style={[styles.input, styles.dropdownContainer]}>
               <TorneosDropDownComponent
+                placeholder="Selecciona el Torneo del Jugador"
                 data={Equipos.find((e) => e.nombre === equipo)?.torneos.map((torneo) => ({ torneos: torneo })) || []}
                 onSelect={(item) => setTorneo(item)}
               />

@@ -2,7 +2,6 @@ import { Colors } from '@/constants/Colors';
 import { StyleSheet, Image, TextInput, TouchableOpacity, Alert, Text, View } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { useSignIn } from '@clerk/clerk-expo';
 
 export default function NotFoundScreen() {
   const router = useRouter();

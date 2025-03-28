@@ -1,26 +1,17 @@
 import { useFonts } from 'expo-font';
-import { Slot, Stack } from 'expo-router';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
-import { tokenCache } from '@/cache';
-
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-if (!publishableKey) {
-  throw new Error('CLERK_PUBLISHABLE_KEY is not set');
-}
+import { Stack } from 'expo-router';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
     Roboto: require('../assets/fonts/Roboto-VariableFont_wdth,wght.ttf'),
     Oswald: require('../assets/fonts/Oswald-VariableFont_wght.ttf'),
   });
+  if (!loaded) return null;
   return (
-    <ClerkProvider publishableKey={publishableKey}
-      tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <Slot />
-      </ClerkLoaded>
-    </ClerkProvider>
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }}></Stack.Screen>
+      <Stack.Screen name="+not-found" options={{ headerShown: false }}></Stack.Screen>
+    </Stack>
   );
 }
 

@@ -3,11 +3,12 @@ import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'rea
 import { Colors } from '@/constants/Colors';
 
 interface TorneosDropDownComponentProps {
+  placeholder: string;
   data: { torneos: string }[];
   onSelect: (item: string) => void;
 }
 
-const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ data, onSelect }) => {
+const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ placeholder, data, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState('');
 
@@ -32,7 +33,7 @@ const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ dat
           }
         }}
       >
-        <Text style={styles.buttonText}>{selectedValue || 'Selecciona el Torneo del Jugador/a'}</Text>
+        <Text style={styles.buttonText}>{selectedValue || placeholder}</Text>
       </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent animationType="slide">

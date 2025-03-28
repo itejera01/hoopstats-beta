@@ -3,11 +3,9 @@ import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import React from 'react';
 import TitleComponent from '@/components/titleComponent';
 import { router } from 'expo-router';
-import { useClerk } from '@clerk/clerk-react';
 
 export default function Index() {
   const [viewGlosario, setViewGlosario] = React.useState(false);
-  const { signOut } = useClerk();
   const redirectToJugador = () => {
     router.push('/jugador');
   }

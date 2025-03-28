@@ -8,21 +8,42 @@ import {
   ScrollView,
 } from "react-native";
 import { Colors } from "@/constants/Colors";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface EquiposDropDownComponentProps {
+interface jugadorDropDownComponentProps {
   placeholder: string;
-  data: { Equipo: { nombre: string } }[];
   onSelect: (item: string) => void;
 }
 
-const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ placeholder, data, onSelect }) => {
+const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ placeholder, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState('');
+  const [jugadores, setJugadores] = useState([]);
+
+  useEffect(() => {
+    try {
+      AsyncStorage.getItem('jugadores').then((value: any) => {
+        if (value) {
+          setJugadores(JSON.parse(value));
+        } else {
+          setJugadores([]);
+        }
+      })
+    } catch (e) {
+      console.log(e);
+    }
+  }, [isModalVisible]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
     setSelectedValue('');
   }
+
+  const handleSelect = (item: any) => {
+    setSelectedValue(item.nombre)
+    onSelect(selectedValue)
+    setModalVisible(!isModalVisible);
+  };
 
   useEffect(() => {
     if (selectedValue != '') {
@@ -30,6 +51,7 @@ const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ pla
       setModalVisible(!isModalVisible);
     }
   }, [selectedValue]);
+
 
   return (
     <View style={styles.container}>
@@ -40,15 +62,15 @@ const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ pla
       <Modal visible={isModalVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <ScrollView style={styles.modalContent}>
-            {data.map((item, index) => (
+            {jugadores ? jugadores.map((item, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.option}
-                onPress={() => setSelectedValue(item.Equipo.nombre)}
+                onPress={() => { handleSelect(item) }}
               >
-                <Text style={styles.optionText}>{item.Equipo.nombre}</Text>
+                <Text style={styles.optionText}>{item.nombre}</Text>
               </TouchableOpacity>
-            ))}
+            )) : null}
           </ScrollView>
           <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
             <Text style={styles.closeText}>Cerrar</Text>
@@ -112,4 +134,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EquiposDropDownComponent;
+export default jugadorDropDownComponent;
