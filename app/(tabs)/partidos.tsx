@@ -149,8 +149,8 @@ export default function Partidos() {
                   <TextInput
                     placeholder="Hora de Inicio"
                     placeholderTextColor={Colors.text}
-                    value={inicio}
                     editable={false}
+                    value={inicio ? moment(inicio).format('HH:mm') : ''}
                     style={styles.text}
                   />
                 </TouchableOpacity>
@@ -178,14 +178,14 @@ export default function Partidos() {
                 </TouchableOpacity>
               </View>
               <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.inicioInput]}>
-                <Text style={[styles.text]}>{equipoJugador || "Equipo"}</Text>
+                <Text style={[styles.text]}>{equipoJugador || "Aliado"}</Text>
               </View>
               <View style={[{ alignItems: 'center', justifyContent: 'center' }]}>
                 <Text style={styles.text}> VS </Text>
               </View>
               <View style={[styles.input, styles.inicioInput]}>
                 <EquiposDropDownComponent
-                  placeholder="Equipo Rival"
+                  placeholder="Rival"
                   data={Equipos.map((equipo) => ({ Equipo: { nombre: equipo.nombre } }))}
                   onSelect={(item) => setEquipoRival(item)}
                 />

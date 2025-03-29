@@ -9,23 +9,27 @@ import {
 } from "react-native";
 import { Colors } from "@/constants/Colors";
 
+type Equipo = {
+  id: number;
+  nombre: string;
+};
 interface EquiposDropDownComponentProps {
   placeholder: string;
-  data: { Equipo: { nombre: string } }[];
-  onSelect: (item: string) => void;
+  data: Equipo[];
+  onSelect: (item: number) => void;
 }
 
 const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ placeholder, data, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState(0);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setSelectedValue('');
+    setSelectedValue(0);
   }
 
   useEffect(() => {
-    if (selectedValue != '') {
+    if (selectedValue != 0) {
       onSelect(selectedValue);
       setModalVisible(!isModalVisible);
     }
@@ -33,7 +37,11 @@ const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ pla
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={toggleModal}>
+      <TouchableOpacity style={styles.button} onPress={() => {
+        if (data.length > 0) {
+          toggleModal();
+        }
+      }}>
         <Text style={styles.buttonText}>{selectedValue || placeholder}</Text>
       </TouchableOpacity>
 
@@ -44,9 +52,9 @@ const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ pla
               <TouchableOpacity
                 key={index}
                 style={styles.option}
-                onPress={() => setSelectedValue(item.Equipo.nombre)}
+                onPress={() => setSelectedValue(item.id)}
               >
-                <Text style={styles.optionText}>{item.Equipo.nombre}</Text>
+                <Text style={styles.optionText}>{item.nombre}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

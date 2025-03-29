@@ -2,22 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
+type Torneo = {
+  id: number;
+  nombre: string;
+};
+
 interface TorneosDropDownComponentProps {
   placeholder: string;
-  data: { torneos: string }[];
-  onSelect: (item: string) => void;
+  data: Torneo[];
+  onSelect: (item: number) => void;
 }
 
 const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ placeholder, data, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState(0);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setSelectedValue('');
+    setSelectedValue(0);
   };
 
-  const handleSelect = (item: string) => {
+  const handleSelect = (item: number) => {
     setSelectedValue(item);
     onSelect(item);
     setModalVisible(false);
@@ -43,9 +48,9 @@ const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ pla
               <TouchableOpacity
                 key={index}
                 style={styles.option}
-                onPress={() => handleSelect(item.torneos)}
+                onPress={() => handleSelect(item.id)}
               >
-                <Text style={styles.optionText}>{item.torneos}</Text>
+                <Text style={styles.optionText}>{item.nombre}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

@@ -15,135 +15,150 @@ export default function JugadorComponent(
       posicion: string,
     }) {
   const [showStats, setShowStats] = useState(false);
-
   const [partidos, setPartidos] = useState<any[]>([]);
 
+  // Cargar los partidos desde AsyncStorage
   React.useEffect(() => {
     const fetchPartidos = async () => {
       const storedPartidos = await AsyncStorage.getItem("partidosJugados");
-      console.log(storedPartidos)
       if (storedPartidos) {
-        setPartidos(JSON.parse(storedPartidos));
+        try {
+          const parsedPartidos = JSON.parse(storedPartidos);
+          if (Array.isArray(parsedPartidos)) {
+            setPartidos(parsedPartidos);
+            console.log("Partidos cargados:", parsedPartidos);
+          } else {
+            setPartidos([]); // Si no es un arreglo, inicializar como un arreglo vacío
+          }
+        } catch (error) {
+          console.error("Error al parsear partidos:", error);
+          setPartidos([]); // En caso de error en el parseo, inicializar como vacío
+        }
+      } else {
+        setPartidos([]); // Si no hay partidos en AsyncStorage, inicializar como vacío
       }
     };
     fetchPartidos();
   }, []);
 
-  const data = [
-    {
-      label: 'MIN/P',
-      value: partidos.length > 0 ? (
-        partidos.reduce((acc: number, partido: any) => acc + (Number(partido.minutos) || 0), 0) / partidos.length).toFixed(1) : '0.0'
-    },
-    {
-      label: 'PTS/P',
-      value: partidos.length > 0 ? (
-        partidos.reduce((acc: number, partido: any) => acc + ((Number(partido.dosPuntosEmbocados) || 0) 
-        * 2 + (Number(partido.tresPuntosEmbocados) || 0) * 3 + (Number(partido.tirosLibresEmbocados) || 0)), 0) 
-        / partidos.length).toFixed(1) : '0.0'
-    },
-    {
-      label: 'TC%',
-      value: partidos.length > 0 ? (() => {
-        const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosIntentados + partido.tresPuntosIntentados), 0);
-        return totalIntentados > 0
-          ? `${((partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosEmbocados + partido.tresPuntosEmbocados), 0) 
-          / totalIntentados) * 100).toFixed(1)}%`
-          : '00.0%';
-      })() : '00.0%'
-    },
-    {
-      label: '2PTS%',
-      value: partidos.length > 0 ? (() => {
-        const intentados = partidos.reduce((acc: number, partido: any) => acc + partido.dosPuntosIntentados, 0);
-        return intentados > 0
-          ? `${((partidos.reduce((acc: number, partido: any) => acc + partido.dosPuntosEmbocados, 0) / intentados) * 100).toFixed(1)}%`
-          : '00.0%';
-      })() : '00.0%'
-    },
-    {
-      label: '3PTS%',
-      value: partidos.length > 0 ? (() => {
-        const intentados = partidos.reduce((acc: number, partido: any) => acc + partido.tresPuntosIntentados, 0);
-        return intentados > 0
-          ? `${((partidos.reduce((acc: number, partido: any) => acc + partido.tresPuntosEmbocados, 0) / intentados) * 100).toFixed(1)}%`
-          : '00.0%';
-      })() : '00.0%'
-    },
-    {
-      label: 'TL%',
-      value: partidos.length > 0 ? (() => {
-        const intentados = partidos.reduce((acc: number, partido: any) => acc + partido.tirosLibresIntentados, 0);
-        return intentados > 0
-          ? `${((partidos.reduce((acc: number, partido: any) => acc + partido.tirosLibresEmbocados, 0) / intentados) * 100).toFixed(1)}%`
-          : '00.0%';
-      })() : '00.0%'
-    },
-    {
-      label: 'FC/P',
-      value: partidos.length > 0 
-      ? ((partidos.reduce((acc: number, partido: any) => acc + (Number(partido.faltasCometidas) || 0), 0) / partidos.length).toFixed(1)
-      ) : '0.0'
-    },
-    {
-      label: 'ASI/P',
-      value: partidos.length > 0 
-      ? ((partidos.reduce((acc: number, partido: any) => acc + (Number(partido.asistencias) || 0), 0) / partidos.length).toFixed(1)
-      ) : '0.0'
-    },
-    {
-      label: 'TAP/P',
-      value: partidos.length > 0 
-      ? ((partidos.reduce((acc: number, partido: any) => acc + (Number(partido.tapones) || 0), 0) / partidos.length).toFixed(1)
-      ) : '0.0'
-    },
-    {
-      label: 'REB/P',
-      value: partidos.length > 0 
-        ? (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.rebotes) || 0), 0) / partidos.length).toFixed(1)
-        : '0.0'
-    },
-    {
-      label: 'ROB/P',
-      value: partidos.length > 0 
-        ? (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.robos) || 0), 0) / partidos.length).toFixed(1)
-        : '0.0'
-    },
-    {
-      label: 'EFI',
-      value: partidos.length > 0 ? (
-      partidos.reduce((acc: number, partido: any) => {
-        const puntos = (Number(partido.dosPuntosEmbocados) || 0) * 2 +
-               (Number(partido.tresPuntosEmbocados) || 0) * 3 +
-               (Number(partido.tirosLibresEmbocados) || 0);
-        const rebotes = Number(partido.rebotes) || 0;
-        const asistencias = Number(partido.asistencias) || 0;
-        const robos = Number(partido.robos) || 0;
-        const tapones = Number(partido.tapones) || 0;
+  // Calcular las estadísticas solo cuando los partidos cambian
+  const data = React.useMemo(() => {
+    if (partidos.length === 0) return []; // Si no hay partidos, no calcular estadísticas
 
-        const tirosCampoFallados = (Number(partido.dosPuntosIntentados) || 0) +
-                     (Number(partido.tresPuntosIntentados) || 0) -
-                     ((Number(partido.dosPuntosEmbocados) || 0) +
-                     (Number(partido.tresPuntosEmbocados) || 0));
-        const tirosLibresFallados = (Number(partido.tirosLibresIntentados) || 0) -
-                      (Number(partido.tirosLibresEmbocados) || 0);
-        const perdidas = Number(partido.perdidas) || 0;
-        const faltasRealizadas = Number(partido.faltasCometidas) || 0;
+    return [
+      {
+        label: 'MIN/P',
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.tiempoJugado?.minutes) || 0), 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'PTS/P',
+        value: (partidos.reduce((acc: number, partido: any) => {
+          return acc + (Number(partido.dosPuntosEmbocados) || 0) * 2
+            + (Number(partido.tresPuntosEmbocados) || 0) * 3
+            + (Number(partido.tirosLibresEmbocados) || 0);
+        }, 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'TC%',
+        value: (() => {
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosIntentados || 0) + (partido.tresPuntosIntentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosEmbocados || 0) + (partido.tresPuntosEmbocados || 0), 0);
+          return totalIntentados > 0
+            ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
+            : '00.0%';
+        })(),
+      },
+      {
+        label: '2PTS%',
+        value: (() => {
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosIntentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosEmbocados || 0), 0);
+          return totalIntentados > 0
+            ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
+            : '00.0%';
+        })(),
+      },
+      {
+        label: '3PTS%',
+        value: (() => {
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.tresPuntosIntentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.tresPuntosEmbocados || 0), 0);
+          return totalIntentados > 0
+            ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
+            : '00.0%';
+        })(),
+      },
+      {
+        label: 'TL%',
+        value: (() => {
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.tirosLibresIntentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.tirosLibresEmbocados || 0), 0);
+          return totalIntentados > 0
+            ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
+            : '00.0%';
+        })(),
+      },
+      {
+        label: 'FC/P',
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.faltasCometidas) || 0), 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'ASI/P',
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.asistencias) || 0), 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'TAP/P',
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.tapones) || 0), 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'REB/P',
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.rebotes) || 0), 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'ROB/P',
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.robos) || 0), 0) / partidos.length).toFixed(1),
+      },
+      {
+        label: 'EFI',
+        value: (partidos.reduce((acc: number, partido: any) => {
+          const puntos = (Number(partido.dosPuntosEmbocados) || 0) * 2
+            + (Number(partido.tresPuntosEmbocados) || 0) * 3
+            + (Number(partido.tirosLibresEmbocados) || 0);
+          const rebotes = Number(partido.rebotes) || 0;
+          const asistencias = Number(partido.asistencias) || 0;
+          const robos = Number(partido.robos) || 0;
+          const tapones = Number(partido.tapones) || 0;
 
-        const eficiencia = (puntos + rebotes + asistencias + robos + tapones ) -
-                 (tirosCampoFallados + tirosLibresFallados + perdidas + faltasRealizadas);
+          const tirosCampoFallados = (Number(partido.dosPuntosIntentados) || 0)
+            + (Number(partido.tresPuntosIntentados) || 0) -
+            ((Number(partido.dosPuntosEmbocados) || 0) + (Number(partido.tresPuntosEmbocados) || 0));
 
-        return acc + eficiencia;
-      }, 0) / partidos.length
-      ).toFixed(1) : '0.0'
-    },
-  ];
+          const tirosLibresFallados = (Number(partido.tirosLibresIntentados) || 0) - (Number(partido.tirosLibresEmbocados) || 0);
+          const perdidas = Number(partido.perdidas) || 0;
+          const faltasRealizadas = Number(partido.faltasCometidas) || 0;
 
-  const renderStats = ({ item }: { item: { label: string; value: number | string } }) => (
-    <View style={styles.stats}>
-      <Text style={[styles.text, styles.statsText]}>{item.label}: {item.value}</Text>
-    </View>
-  );
+          const eficiencia = (puntos + rebotes + asistencias + robos + tapones)
+            - (tirosCampoFallados + tirosLibresFallados + perdidas + faltasRealizadas);
+
+          return acc + eficiencia;
+        }, 0) / partidos.length).toFixed(1),
+      },
+    ];
+  }, [partidos]); // Solo recalcular cuando `partidos` cambia
+
+
+
+
+
+
+  const renderStats = ({ item }: { item: { label: string; value: number | string } }) => {
+    return (
+      <View style={styles.stats}>
+        <Text style={[styles.text, styles.statsText]}>{item.label}: {item.value}</Text>
+      </View>
+    );
+  };
+
 
   return (
     <View style={styles.container}>
@@ -160,13 +175,12 @@ export default function JugadorComponent(
       </TouchableOpacity>
       {showStats && (
         <View style={styles.statsContainer}>
-          <ScrollView nestedScrollEnabled>
-            <FlatList
-              data={data}
-              renderItem={renderStats}
-              numColumns={numStatsColumns}
-            />
-          </ScrollView>
+          <FlatList
+            data={data}
+            renderItem={renderStats}
+            numColumns={numStatsColumns}
+            keyExtractor={(item, index) => index.toString()} // Esto asigna una clave única
+          />
         </View>
       )}
     </View>

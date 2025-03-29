@@ -42,7 +42,6 @@ const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ pla
   const handleSelect = (item: any) => {
     setSelectedValue(item.nombre)
     onSelect(selectedValue)
-    setModalVisible(!isModalVisible);
   };
 
   useEffect(() => {

@@ -1,13 +1,12 @@
-import * as SQLite from "expo-sqlite";
+import { useSQLiteContext } from "expo-sqlite";
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image, FlatList } from 'react-native';
 import { Colors } from '@/constants/Colors';
-import { Equipos } from '@/constants/Equipos';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
 import TitleComponent from '@/components/titleComponent';
 import JugadorComponent from '@/components/jugadorComponent';
+import { useLocalSearchParams } from "expo-router";
 
 interface Posicion {
   label: string;
@@ -15,24 +14,69 @@ interface Posicion {
 }
 
 export default function Jugador() {
+  const { id } = useLocalSearchParams();
   const [nombre, setNombre] = useState('');
-  const [equipo, setEquipo] = useState('');
+  const [equipo, setEquipo] = useState(0);
   const [edad, setEdad] = useState(0);
-  const [torneo, setTorneo] = useState('');
+  const [torneo, setTorneo] = useState(0);
   const [jugadores, setJugadores] = useState([]);
   const [modalCrearJugador, setModalCrearJugador] = useState(false);
 
-  useEffect(() => {
-    AsyncStorage.getItem('jugadores').then((value) => {
-      if (value) {
-        setJugadores(JSON.parse(value));
-      }
-    });
-  }, [jugadores])
+  const db = useSQLiteContext();
+
+  const loadData = async () => {
+    const result = await db.getFirstAsync<{
+      id: number;
+      nombre: string;
+      edad: number;
+      equipo: number;
+      torneo: number;
+    }>(`SELECT * FROM users WHERE id = ?`, [parseInt(id as string)]);
+    setNombre(result?.nombre!);
+    setEdad(result?.edad!);
+    setEquipo(result?.equipo!);
+    setTorneo(result?.torneo!);
+  };
+  /*
+
+    const handleSave = async () => {
+    try {
+      const response = await database.runAsync(
+        `INSERT INTO jugadores (nombre, edad, equipo, torneo) VALUES (?, ?, ?, ?)`,
+        [nombre, edad, equipo, torneo]
+      );
+      console.log("Item saved successfully:", response?.changes!);
+      loadData();
+    } catch (error) {
+      console.error("Error saving item:", error);
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const response = await database.runAsync(
+        `UPDATE users SET name = ?, email = ? WHERE id = ?`,
+        [name, email, parseInt(id as string)]
+      );
+      console.log("Item updated successfully:", response?.changes!);
+      router.back();
+    } catch (error) {
+      console.error("Error updating item:", error);
+    }
+  };
+  */
+
+  // useEffect(() => {
+  //   AsyncStorage.getItem('jugadores').then((value) => {
+  //     if (value) {
+  //       setJugadores(JSON.parse(value));
+  //     }
+  //   });
+  // }, [jugadores])
 
 
   const agregarJugador = () => {
-    if (nombre === '' || equipo === '' || edad === 0 || torneo === '' || posicion === null) {
+    if (nombre === '' || equipo === 0 || edad === 0 || torneo === 0 || posicion === null) {
       alert('Por favor complete todos los campos.');
       return;
     }
@@ -45,11 +89,11 @@ export default function Jugador() {
     };
     setJugadores([...jugadores, jugador]);
     setNombre('');
-    setEquipo('');
+    setEquipo(0);
     setEdad(0);
-    setTorneo('');
+    setTorneo(0);
     setModalCrearJugador(!modalCrearJugador);
-    AsyncStorage.setItem('jugadores', JSON.stringify([...jugadores, jugador]));
+    // AsyncStorage.setItem('jugadores', JSON.stringify([...jugadores, jugador]));
   };
 
   const toggleModalCrearJugador = () => setModalCrearJugador(!modalCrearJugador);
@@ -65,9 +109,9 @@ export default function Jugador() {
 
   const cancelarCreacionJugador = () => {
     setNombre('');
-    setEquipo('');
+    setEquipo(0);
     setEdad(0);
-    setTorneo('');
+    setTorneo(0);
     setModalCrearJugador(!modalCrearJugador);
   };
 
@@ -124,20 +168,20 @@ export default function Jugador() {
                 ))}
               </View>
             </View>
-            <View style={[styles.input, styles.dropdownContainer]}>
+            {/* <View style={[styles.input, styles.dropdownContainer]}>
               <EquiposDropDownComponent
                 placeholder="Selecciona el Equipo del Jugador"
                 data={Equipos.map((equipo) => ({ Equipo: { nombre: equipo.nombre } }))}
-                onSelect={(item) => setEquipo(item)}
+                onSelect={(item) => setEquipo(parseInt(item))}
               />
             </View>
             <View style={[styles.input, styles.dropdownContainer]}>
               <TorneosDropDownComponent
                 placeholder="Selecciona el Torneo del Jugador"
-                data={Equipos.find((e) => e.nombre === equipo)?.torneos.map((torneo) => ({ torneos: torneo })) || []}
-                onSelect={(item) => setTorneo(item)}
+                data={}
+                onSelect={(item) => setTorneo(parseInt(item))}
               />
-            </View>
+            </View> */}
             <View style={styles.botones}>
               <TouchableOpacity
                 style={[styles.inputButton, { backgroundColor: Colors.barDownBackground }]}
