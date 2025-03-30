@@ -10,21 +10,25 @@ type Torneo = {
 interface TorneosDropDownComponentProps {
   placeholder: string;
   data: Torneo[];
-  onSelect: (item: number) => void;
+  onSelect: (item: Torneo) => void;
 }
 
 const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ placeholder, data, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(0);
+  const [selectedValue, setSelectedValue] = useState<{ id: number | null; nombre: string }>({
+    id: null,
+    nombre: "",
+  });
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setSelectedValue(0);
+    setSelectedValue({ id: null, nombre: "" });
+    onSelect(null);
   };
 
-  const handleSelect = (item: number) => {
-    setSelectedValue(item);
-    onSelect(item);
+  const handleSelect = (item: Torneo) => {
+    setSelectedValue({ id: item.id, nombre: item.nombre });
+    onSelect({ id: item.id, nombre: item.nombre });
     setModalVisible(false);
   };
 
@@ -34,21 +38,23 @@ const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ pla
         style={styles.button}
         onPress={() => {
           if (data.length > 0) {
-            toggleModal();
+            setModalVisible(true);
           }
         }}
       >
-        <Text style={styles.buttonText}>{selectedValue || placeholder}</Text>
+        <Text style={styles.buttonText}>
+          {selectedValue.id !== null ? selectedValue.nombre : placeholder}
+        </Text>
       </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <ScrollView style={styles.modalContent}>
-            {data.map((item, index) => (
+            {data.map((item) => (
               <TouchableOpacity
-                key={index}
+                key={item.id}
                 style={styles.option}
-                onPress={() => handleSelect(item.id)}
+                onPress={() => handleSelect(item)}
               >
                 <Text style={styles.optionText}>{item.nombre}</Text>
               </TouchableOpacity>
@@ -62,6 +68,7 @@ const TorneosDropDownComponent: React.FC<TorneosDropDownComponentProps> = ({ pla
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

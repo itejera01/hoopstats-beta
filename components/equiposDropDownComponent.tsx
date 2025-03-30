@@ -16,24 +16,30 @@ type Equipo = {
 interface EquiposDropDownComponentProps {
   placeholder: string;
   data: Equipo[];
-  onSelect: (item: number) => void;
+  onSelect: (item: Equipo) => void;
 }
 
 const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ placeholder, data, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(0);
+  const [selectedValue, setSelectedValue] = useState<{ id: number | null; nombre: string }>({
+    id: 0,
+    nombre: ""
+  });
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setSelectedValue(0);
-  }
+    setSelectedValue({ id: 0, nombre: "" });
+    onSelect(null);
+  };
 
   useEffect(() => {
-    if (selectedValue != 0) {
-      onSelect(selectedValue);
+    if (selectedValue.id !== 0) {
+      onSelect({id: selectedValue.id, nombre: selectedValue.nombre});
       setModalVisible(!isModalVisible);
     }
   }, [selectedValue]);
+
+
 
   return (
     <View style={styles.container}>
@@ -42,7 +48,7 @@ const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ pla
           toggleModal();
         }
       }}>
-        <Text style={styles.buttonText}>{selectedValue || placeholder}</Text>
+        <Text style={styles.buttonText}>{selectedValue.id !== 0 && selectedValue.nombre || placeholder}</Text>
       </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent animationType="slide">
@@ -52,7 +58,7 @@ const EquiposDropDownComponent: React.FC<EquiposDropDownComponentProps> = ({ pla
               <TouchableOpacity
                 key={index}
                 style={styles.option}
-                onPress={() => setSelectedValue(item.id)}
+                onPress={() => setSelectedValue({ id: item.id, nombre: item.nombre })}
               >
                 <Text style={styles.optionText}>{item.nombre}</Text>
               </TouchableOpacity>

@@ -1,4 +1,4 @@
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { Stack } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
 import React, { useState, useEffect } from "react";
 import {
@@ -6,7 +6,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
 } from "react-native";
 import { Colors } from '@/constants/Colors';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,7 +19,7 @@ type Equipo = {
 type Torneo = {
   id: number;
   nombre: string;
-}
+};
 
 export default function settingsModal() {
   const database = useSQLiteContext();

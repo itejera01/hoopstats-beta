@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Colors } from '@/constants/Colors';
-import { StyleSheet, TouchableOpacity, Text, View, ScrollView, TextInput } from 'react-native';
+import { StyleSheet, TouchableOpacity, Text, View, ScrollView, TextInput, Modal } from 'react-native';
 import moment from 'moment';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import { Equipos } from '@/constants/Equipos';
 import TitleComponent from '@/components/titleComponent';
 import PartidoComponent from '@/components/partidoComponent';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
@@ -130,106 +128,108 @@ export default function Partidos() {
             <Text style={{ color: Colors.text }}>No hay partidos creados.</Text>
           )}
         </ScrollView>
-        {modalCrearPartido && (
-          <View style={styles.modalContainer}>
-            <View style={{ flexDirection: 'row' }}>
-              <View style={[styles.input, styles.inicioInput]}>
-                <TouchableOpacity onPress={toggleFechaPicker}>
-                  <TextInput
-                    placeholder="Fecha"
-                    placeholderTextColor={Colors.text}
-                    value={fecha ? moment(fecha).format('DD/MM/YYYY') : ''}
-                    editable={false}
-                    style={styles.text}
-                  />
-                </TouchableOpacity>
+        <Modal visible={modalCrearPartido} transparent animationType="slide">
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <View style={{ flexDirection: 'row' }}>
+                <View style={[styles.input, styles.inicioInput]}>
+                  <TouchableOpacity onPress={toggleFechaPicker}>
+                    <TextInput
+                      placeholder="Fecha"
+                      placeholderTextColor={Colors.text}
+                      value={fecha ? moment(fecha).format('DD/MM/YYYY') : ''}
+                      editable={false}
+                      style={styles.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View style={[styles.input, styles.inicioInput]}>
+                  <TouchableOpacity onPress={toggleInicioPicker}>
+                    <TextInput
+                      placeholder="Hora de Inicio"
+                      placeholderTextColor={Colors.text}
+                      editable={false}
+                      value={inicio ? moment(inicio).format('HH:mm') : ''}
+                      style={styles.text}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={[styles.input, styles.inicioInput]}>
-                <TouchableOpacity onPress={toggleInicioPicker}>
-                  <TextInput
-                    placeholder="Hora de Inicio"
-                    placeholderTextColor={Colors.text}
-                    editable={false}
-                    value={inicio ? moment(inicio).format('HH:mm') : ''}
-                    style={styles.text}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.input}>
-              <JugadorDropDownComponent
-                placeholder="Seleccionar Jugador"
-                onSelect={(item) => setJugadorSeleccionado(item.toString())}
-              />
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-              <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <TouchableOpacity
-                  style={[
-                    styles.localidad,
-                  ]}
-                  onPress={() => {
-                    setLocalidad(equipoJugador)
-                    alert('Equipo Local: ' + equipoJugador);
-                  }
-                  }
-                >
-                  <Text style={[styles.localidadText]}>L</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.inicioInput]}>
-                <Text style={[styles.text]}>{equipoJugador || "Aliado"}</Text>
-              </View>
-              <View style={[{ alignItems: 'center', justifyContent: 'center' }]}>
-                <Text style={styles.text}> VS </Text>
-              </View>
-              <View style={[styles.input, styles.inicioInput]}>
-                <EquiposDropDownComponent
-                  placeholder="Rival"
-                  data={Equipos.map((equipo) => ({ Equipo: { nombre: equipo.nombre } }))}
-                  onSelect={(item) => setEquipoRival(item)}
+              <View style={styles.input}>
+                <JugadorDropDownComponent
+                  placeholder="Seleccionar Jugador"
+                  onSelect={(item) => setJugadorSeleccionado(item.toString())}
                 />
               </View>
-              <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ flexDirection: 'row' }}>
+                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.localidad,
+                    ]}
+                    onPress={() => {
+                      setLocalidad(equipoJugador)
+                      alert('Equipo Local: ' + equipoJugador);
+                    }
+                    }
+                  >
+                    <Text style={[styles.localidadText]}>L</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.inicioInput]}>
+                  <Text style={[styles.text]}>{equipoJugador || "Aliado"}</Text>
+                </View>
+                <View style={[{ alignItems: 'center', justifyContent: 'center' }]}>
+                  <Text style={styles.text}> VS </Text>
+                </View>
+                <View style={[styles.input, styles.inicioInput]}>
+                  {/* <EquiposDropDownComponent
+                      placeholder="Rival"
+                      data={Equipos.map((equipo))}
+                      onSelect={(item) => setEquipoRival(item)}
+                    /> */}
+                </View>
+                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.localidad,
+                    ]}
+                    onPress={() => {
+                      setLocalidad(equipoRival)
+                      alert('Equipo Local: ' + equipoRival);
+                    }}>
+                    <Text style={[styles.localidadText]}>L</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.dropdownContainer]}>
+                <TextInput
+                  style={styles.dropdownText}
+                  placeholder="Torneo"
+                  placeholderTextColor={Colors.text}
+                  value={torneo}
+                  editable={false}
+                />
+              </View>
+              <View style={styles.botones}>
                 <TouchableOpacity
-                  style={[
-                    styles.localidad,
-                  ]}
+                  style={[styles.inputButton, { backgroundColor: Colors.barDownBackground }]}
+                  onPress={() => cancelarCreacionPartido()}
+                >
+                  <Text style={styles.buttonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.inputButton}
                   onPress={() => {
-                    setLocalidad(equipoRival)
-                    alert('Equipo Local: ' + equipoRival);
-                  }}>
-                  <Text style={[styles.localidadText]}>L</Text>
+                    agregarPartido();
+                  }}
+                >
+                  <Text style={styles.buttonText}>Crear partido</Text>
                 </TouchableOpacity>
               </View>
             </View>
-            <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.dropdownContainer]}>
-              <TextInput
-                style={styles.dropdownText}
-                placeholder="Torneo"
-                placeholderTextColor={Colors.text}
-                value={torneo}
-                editable={false}
-              />
-            </View>
-            <View style={styles.botones}>
-              <TouchableOpacity
-                style={[styles.inputButton, { backgroundColor: Colors.barDownBackground }]}
-                onPress={() => cancelarCreacionPartido()}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.inputButton}
-                onPress={() => {
-                  agregarPartido();
-                }}
-              >
-                <Text style={styles.buttonText}>Crear partido</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        )}
+        </Modal>
       </View >
       <TouchableOpacity
         style={styles.helpButton}
@@ -281,6 +281,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5, // Sombra para Android
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   logo: {
     marginBottom: 20, // Espacio debajo del logo
