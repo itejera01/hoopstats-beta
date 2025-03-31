@@ -3,106 +3,175 @@ import { Colors } from '@/constants/Colors';
 import { StyleSheet, TouchableOpacity, Text, View, ScrollView, TextInput, Modal } from 'react-native';
 import moment from 'moment';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSQLiteContext } from 'expo-sqlite';
+import { Jugador, Torneo, Partido, Equipo } from '@/constants/Types';
 import TitleComponent from '@/components/titleComponent';
 import PartidoComponent from '@/components/partidoComponent';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import JugadorDropDownComponent from '@/components/jugadorDropDownComponent';
 
-interface Jugador {
-  nombre: string,
-  edad: number,
-  equipo: string,
-  posicion: string,
-  torneo: string,
-}
-
 export default function Partidos() {
-  const [partidos, setPartidos] = useState([]);
-  const [torneo, setTorneo] = useState('');
-  const [equipoJugador, setEquipoJugador] = useState('');
-  const [equipoRival, setEquipoRival] = useState('');
-  const [jugadorSeleccionado, setJugadorSeleccionado] = useState('');
+  const [partidos, setPartidos] = useState<Partido[]>([]);
+  const [posiblesRivales, setPosiblesRivales] = useState<Equipo[]>([]);
+  const [torneo, setTorneo] = useState<Torneo | null>(null);
+  const [equipoJugador, setEquipoJugador] = useState<Equipo | null>(null);
+  const [equipoRival, setEquipoRival] = useState<Equipo | null>(null);
+  const [equipoLocal, setEquipoLocal] = useState<Equipo | null>(null);
+  const [jugadorSeleccionado, setJugadorSeleccionado] = useState<Jugador | null>(null);
   const [fecha, setFecha] = useState<Date | null>(null);
-  const [inicio, setInicio] = useState(null);
-  const [localidad, setLocalidad] = useState('');
+  const [inicio, setInicio] = useState<Date | null>(null);
   const [modalCrearPartido, setModalCrearPartido] = useState(false);
   const [visibleFechaPicker, setVisibleFechaPicker] = useState(false);
   const [visibleInicioPicker, setVisibleInicioPicker] = useState(false);
 
-  useEffect(() => {
-    const fetchEquipos = async () => {
-      try {
-        const value = await AsyncStorage.getItem('jugadores');
-        if (value) {
-          const jugadores = JSON.parse(value) as Jugador[];
-          const equipoJugador = jugadores.find(jugador => jugador.nombre === jugadorSeleccionado)?.equipo;
-          const torneoJugador = jugadores.find(jugador => jugador.nombre === jugadorSeleccionado)?.torneo;
-          setEquipoJugador(equipoJugador)
-          setTorneo(torneoJugador)
-        }
-      } catch (error) {
-        console.error('Error fetching partidos from AsyncStorage:', error);
-      }
-    }
-
-    if (jugadorSeleccionado != '') {
-      fetchEquipos();
-    }
-  }, [jugadorSeleccionado]);
+  const db = useSQLiteContext();
 
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        const value = await AsyncStorage.getItem('partidos');
-        if (value) {
-          setPartidos(JSON.parse(value));
+        const partidos = await db.getAllAsync<Partido>("SELECT * FROM Partidos");
+        setPartidos(partidos || []);
+      } catch (error) {
+        console.error("Error fetching partidos:", error);
+      }
+    };
+    fetchPartidos();
+  }, []);
+
+  useEffect(() => {
+    const fetchEquipos = async () => {
+      if (!jugadorSeleccionado) return;
+      try {
+        const [jugador] = await db.getAllAsync<{
+          id: number;
+          nombre: string;
+          edad: number;
+          posicion: string;
+          equipo: number;
+          torneo: number;
+          equipo_nombre: string;
+          torneo_nombre: string;
+        }>(
+          `SELECT 
+                    Jugador.id,
+                    Jugador.nombre,
+                    Jugador.edad,
+                    Jugador.posicion,
+                    Jugador.equipo,
+                    Jugador.torneo,
+                    Equipo.nombre AS equipo_nombre,
+                    Torneo.nombre AS torneo_nombre
+                FROM Jugador
+                INNER JOIN Equipo ON Jugador.equipo = Equipo.id
+                INNER JOIN Torneo ON Jugador.torneo = Torneo.id
+                WHERE Jugador.id = ?`,
+          [jugadorSeleccionado.id]
+        );
+
+        if (jugador?.equipo && jugador?.torneo) {
+          const [resultado] = await db.getAllAsync<{
+            equipo_nombre: string;
+            torneo_nombre: string
+          }>(
+            `SELECT E.nombre AS equipo_nombre, T.nombre AS torneo_nombre
+               FROM Equipo E
+               JOIN Equipo_Torneo ET ON E.id = ET.equipo
+               JOIN Torneo T ON ET.torneo = T.id
+               WHERE ET.torneo = ? AND E.id = ?`,
+            [jugador.torneo, jugador.equipo]
+          );
+
+          if (resultado) {
+            setEquipoJugador({
+              id: jugador.equipo,
+              nombre: resultado.equipo_nombre
+            });
+
+            setTorneo({
+              id: jugador.torneo,
+              nombre: resultado.torneo_nombre
+            });
+          }
+
+          const posiblesRivales = await db.getAllAsync<{ id: number; nombre: string }>(
+            `SELECT E.id, E.nombre
+             FROM Equipo E
+             JOIN Equipo_Torneo ET ON E.id = ET.equipo
+             WHERE ET.torneo = ?`,
+            [jugador.torneo]
+          );
+          setPosiblesRivales(posiblesRivales);
         }
       } catch (error) {
-        console.error('Error fetching partidos from AsyncStorage:', error);
+        console.error("Error fetching equipos:", error);
       }
-    }
-    fetchPartidos();
-  }, [partidos]);
+    };
+    fetchEquipos();
+  }, [jugadorSeleccionado]);
+
 
   const toggleModalCrearPartido = () => setModalCrearPartido(!modalCrearPartido);
   const toggleFechaPicker = () => setVisibleFechaPicker(!visibleFechaPicker);
   const toggleInicioPicker = () => setVisibleInicioPicker(!visibleInicioPicker);
 
-  const agregarPartido = () => {
-    if (!jugadorSeleccionado || !equipoJugador || !equipoRival || !torneo || !fecha || !inicio || !localidad) {
-      alert('Por favor, complete todos los campos antes de crear el partido.');
+  const agregarPartido = async () => {
+    if (!jugadorSeleccionado || !equipoJugador || !equipoRival || !torneo || !fecha || !inicio || !equipoLocal) {
+      alert("Por favor, complete todos los campos antes de crear el partido.");
       return;
     }
-    const partido = {
-      fecha: fecha ? moment(fecha).format('DD/MM/YYYY') : '',
-      inicio,
-      jugadorSeleccionado,
-      equipoJugador,
-      equipoRival,
-      torneo,
-      localidad,
+
+    const nuevoPartido: Partido = {
+      id: 0,
+      jugador: jugadorSeleccionado.id,
+      equipoJugador: equipoJugador.id,
+      equipoRival: equipoRival.id,
+      torneo: torneo.id,
+      equipoLocal: equipoLocal.id,
+      fecha: moment(fecha || undefined).format("DD/MM/YYYY"),
+      inicio: moment(inicio || undefined).format("HH:mm"),
+      jugado: 0,
     };
-    setPartidos([...partidos, partido]);
-    setJugadorSeleccionado('');
-    setEquipoJugador('');
-    setEquipoRival('');
-    setFecha(null);
-    setInicio('');
-    setLocalidad('');
-    toggleModalCrearPartido();
-    AsyncStorage.setItem('partidos', JSON.stringify([...partidos, partido]));
-  }
+
+    try {
+      await db.runAsync(
+        "INSERT INTO Partidos (jugador, equipoJugador, equipoRival, torneo, equipoLocal, fecha, inicio, jugado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          nuevoPartido.jugador,
+          nuevoPartido.equipoJugador,
+          nuevoPartido.equipoRival,
+          nuevoPartido.torneo,
+          nuevoPartido.equipoLocal,
+          nuevoPartido.fecha,
+          nuevoPartido.inicio,
+          nuevoPartido.jugado,
+        ]
+      );
+
+      // Actualizar el estado con el nuevo partido
+      setPartidos((prevPartidos) => [...prevPartidos, nuevoPartido]);
+
+      // Reiniciar los valores
+      setJugadorSeleccionado(null);
+      setEquipoJugador(null);
+      setEquipoRival(null);
+      setFecha(null);
+      setInicio(null);
+      setEquipoLocal(null);
+      toggleModalCrearPartido();
+    } catch (error) {
+      console.error("Error al insertar partido en la base de datos:", error);
+    }
+  };
 
   const cancelarCreacionPartido = () => {
-    setJugadorSeleccionado('');
-    setEquipoJugador('');
-    setEquipoRival('');
+    setJugadorSeleccionado(null);
+    setEquipoJugador(null);
+    setEquipoRival(null);
     setFecha(null);
-    setInicio('');
-    setLocalidad('');
+    setInicio(null);
+    setEquipoLocal(null);
     toggleModalCrearPartido();
-  }
+  };
 
   return (
     <>
@@ -114,14 +183,14 @@ export default function Partidos() {
               .sort((a, b) => moment(a.fecha, 'DD/MM/YYYY').toDate().getTime() - moment(b.fecha, 'DD/MM/YYYY').toDate().getTime())
               .map((partido) => (
                 <PartidoComponent
-                  key={partido.fecha + partido.inicio + partido.equipoJugador + partido.equipoRival}
+                  key={partido.id}
                   fecha={partido.fecha}
                   inicio={partido.inicio}
-                  jugadorSeleccionado={partido.jugadorSeleccionado}
+                  jugadorSeleccionado={partido.jugador}
                   equipoJugador={partido.equipoJugador}
                   equipoRival={partido.equipoRival}
                   torneo={partido.torneo}
-                  localidad={partido.localidad}
+                  equipoLocal={partido.equipoLocal}
                 />
               ))
           ) : (
@@ -158,71 +227,70 @@ export default function Partidos() {
               <View style={styles.input}>
                 <JugadorDropDownComponent
                   placeholder="Seleccionar Jugador"
-                  onSelect={(item) => setJugadorSeleccionado(item.toString())}
+                  onSelect={(item) => setJugadorSeleccionado(item)}
                 />
               </View>
-              <View style={{ flexDirection: 'row' }}>
-                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <TouchableOpacity
-                    style={[
-                      styles.localidad,
-                    ]}
-                    onPress={() => {
-                      setLocalidad(equipoJugador)
-                      alert('Equipo Local: ' + equipoJugador);
-                    }
-                    }
-                  >
-                    <Text style={[styles.localidadText]}>L</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.inicioInput]}>
-                  <Text style={[styles.text]}>{equipoJugador || "Aliado"}</Text>
-                </View>
-                <View style={[{ alignItems: 'center', justifyContent: 'center' }]}>
-                  <Text style={styles.text}> VS </Text>
-                </View>
-                <View style={[styles.input, styles.inicioInput]}>
-                  {/* <EquiposDropDownComponent
-                      placeholder="Rival"
-                      data={Equipos.map((equipo))}
-                      onSelect={(item) => setEquipoRival(item)}
-                    /> */}
-                </View>
-                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <TouchableOpacity
-                    style={[
-                      styles.localidad,
-                    ]}
-                    onPress={() => {
-                      setLocalidad(equipoRival)
-                      alert('Equipo Local: ' + equipoRival);
-                    }}>
-                    <Text style={[styles.localidadText]}>L</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.dropdownContainer]}>
-                <TextInput
-                  style={styles.dropdownText}
-                  placeholder="Torneo"
-                  placeholderTextColor={Colors.text}
-                  value={torneo}
-                  editable={false}
-                />
-              </View>
+              {jugadorSeleccionado != null && (
+                <>
+                  <View style={{ flexDirection: 'row' }}>
+                    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.localidad,
+                        ]}
+                        onPress={() => {
+                          setEquipoLocal(equipoJugador)
+                          alert('Equipo Local: ' + equipoJugador.nombre)
+                        }}>
+                        <Text style={[styles.localidadText]}>L</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.inicioInput]}>
+                      <Text style={[styles.text]}>{equipoJugador?.nombre || "Aliado"}</Text>
+                    </View>
+                    <View style={[{ alignItems: 'center', justifyContent: 'center' }]}>
+                      <Text style={styles.text}> VS </Text>
+                    </View>
+                    <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input, styles.inicioInput]}>
+                      <EquiposDropDownComponent
+                        placeholder="Rival"
+                        data={posiblesRivales}
+                        onSelect={(item) => setEquipoRival(item)}
+                      />
+                    </View>
+                    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.localidad,
+                        ]}
+                        onPress={() => {
+                          setEquipoLocal(equipoRival)
+                          alert('Equipo Local: ' + equipoRival.nombre);
+                        }}>
+                        <Text style={[styles.localidadText]}>L</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={[{ alignItems: 'center', justifyContent: 'center' }, styles.input]}>
+                    <TextInput
+                      style={styles.text}
+                      placeholder="Seleccionar Torneo"
+                      value={torneo?.nombre || ''}
+                      editable={false}
+                    />
+                  </View>
+                </>
+              )}
               <View style={styles.botones}>
                 <TouchableOpacity
                   style={[styles.inputButton, { backgroundColor: Colors.barDownBackground }]}
-                  onPress={() => cancelarCreacionPartido()}
+                  onPress={cancelarCreacionPartido}
                 >
                   <Text style={styles.buttonText}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.inputButton}
-                  onPress={() => {
-                    agregarPartido();
-                  }}
+                  onPress={agregarPartido}
                 >
                   <Text style={styles.buttonText}>Crear partido</Text>
                 </TouchableOpacity>
@@ -230,13 +298,13 @@ export default function Partidos() {
             </View>
           </View>
         </Modal>
-      </View >
+      </View>
       <TouchableOpacity
         style={styles.helpButton}
-        onPress={() => toggleModalCrearPartido()}
+        onPress={toggleModalCrearPartido}
       >
         <Text style={styles.helpButtonText}>+</Text>
-      </TouchableOpacity >
+      </TouchableOpacity>
 
       <DateTimePickerModal
         isVisible={visibleFechaPicker}
@@ -247,12 +315,11 @@ export default function Partidos() {
       <DateTimePickerModal
         isVisible={visibleInicioPicker}
         mode="time"
-        onConfirm={(time) => setInicio(moment(time).format('HH:mm'))}
+        onConfirm={(time) => setInicio(time)}
         onCancel={toggleInicioPicker}
       />
     </>
-  )
-
+  );
 }
 
 const styles = StyleSheet.create({

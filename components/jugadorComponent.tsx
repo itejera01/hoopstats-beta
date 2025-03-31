@@ -1,13 +1,15 @@
 import { Colors } from '@/constants/Colors';
-import { View, Text, StyleSheet, FlatList, ScrollView } from 'react-native';
+import { Jugador } from '@/constants/Types';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useSQLiteContext } from 'expo-sqlite';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import React, { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const numStatsColumns = 2;
 export default function JugadorComponent(
-  { nombre, equipo, torneo, edad, posicion }:
+  { id, nombre, equipo, torneo, edad, posicion }:
     {
+      id: number,
       nombre: string,
       equipo: string,
       torneo: string,
@@ -17,25 +19,19 @@ export default function JugadorComponent(
   const [showStats, setShowStats] = useState(false);
   const [partidos, setPartidos] = useState<any[]>([]);
 
+  const db = useSQLiteContext();
   // Cargar los partidos desde AsyncStorage
   React.useEffect(() => {
     const fetchPartidos = async () => {
-      const storedPartidos = await AsyncStorage.getItem("partidosJugados");
+      const storedPartidos = await db.getAllAsync("SELECT * FROM Estadisticas_Jugador_Partido WHERE Jugador=?", [id])
       if (storedPartidos) {
         try {
-          const parsedPartidos = JSON.parse(storedPartidos);
-          if (Array.isArray(parsedPartidos)) {
-            setPartidos(parsedPartidos);
-            console.log("Partidos cargados:", parsedPartidos);
-          } else {
-            setPartidos([]); // Si no es un arreglo, inicializar como un arreglo vacío
-          }
+          setPartidos(storedPartidos);
         } catch (error) {
-          console.error("Error al parsear partidos:", error);
-          setPartidos([]); // En caso de error en el parseo, inicializar como vacío
+          console.log(error);
         }
       } else {
-        setPartidos([]); // Si no hay partidos en AsyncStorage, inicializar como vacío
+        setPartidos([]);
       }
     };
     fetchPartidos();
@@ -48,7 +44,7 @@ export default function JugadorComponent(
     return [
       {
         label: 'MIN/P',
-        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.tiempoJugado?.minutes) || 0), 0) / partidos.length).toFixed(1),
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.minutosJugados) || 0), 0) / partidos.length).toFixed(1),
       },
       {
         label: 'PTS/P',
@@ -144,10 +140,31 @@ export default function JugadorComponent(
         }, 0) / partidos.length).toFixed(1),
       },
     ];
-  }, [partidos]); // Solo recalcular cuando `partidos` cambia
+  }, [partidos]);
 
 
-
+  const eliminarJugador = async ({ id, nombre }) => {
+    Alert.alert(
+      "Confirmación",
+      `¿Estás seguro de eliminar al jugador ${nombre}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await db.runAsync("DELETE FROM Jugador WHERE id = ?", [id]);
+              Alert.alert("Éxito", `Jugador ${nombre} eliminado exitosamente.`);
+            } catch (error) {
+              console.error("Error al eliminar el jugador:", error);
+              Alert.alert("Error", "Hubo un problema al eliminar al jugador.");
+            }
+          }
+        }
+      ]
+    );
+  };
 
 
 
@@ -163,14 +180,21 @@ export default function JugadorComponent(
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.infoJugador} onPress={() => setShowStats(!showStats)}>
-        <View style={styles.imageContainer}>
-          <Text style={styles.text}>(escudo)</Text>
+        <View>
+          <View style={styles.imageContainer}>
+            <Text style={styles.text}>(escudo)</Text>
+          </View>
         </View>
         <View>
           <Text style={[styles.text, styles.nombre]}>{nombre}</Text>
           <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
           <Text style={[styles.text, styles.datosEquipo]}>{equipo}</Text>
           <Text style={[styles.text, styles.edad]}>{edad} años - {posicion}</Text>
+        </View>
+        <View style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 10, }}>
+          <TouchableOpacity onPress={() => eliminarJugador({ id, nombre })}>
+            <FontAwesome name="trash" size={20} color={Colors.editButton} />
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
       {showStats && (

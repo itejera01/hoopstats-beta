@@ -12,15 +12,15 @@ export default function partidoComponent({
   equipoJugador,
   equipoRival,
   torneo,
-  localidad,
+  equipoLocal,
 }: {
   fecha: string;
   inicio: string;
-  jugadorSeleccionado: string;
-  equipoJugador: string;
-  equipoRival: string;
-  torneo: string;
-  localidad: string;
+  jugadorSeleccionado: number;
+  equipoJugador: number;
+  equipoRival: number;
+  torneo: number;
+  equipoLocal: number;
 }) {
   const [statsVisible, setStatsVisible] = useState(false);
   const [dosPuntosIntentados, setDosPuntosIntentados] = useState(0);
@@ -50,7 +50,7 @@ export default function partidoComponent({
         <View>
           <Text style={[styles.text, styles.partido]}>{equipoJugador} vs {equipoRival}</Text>
           <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
-          <Text style={[styles.text, styles.datosEquipo]}>En {localidad}</Text>
+          <Text style={[styles.text, styles.datosEquipo]}>En {equipoLocal}</Text>
           <Text style={[styles.text, styles.datosEquipo]}>{fecha} - {inicio}</Text>
         </View>
       </TouchableOpacity>
@@ -275,7 +275,7 @@ export default function partidoComponent({
                     equipoJugador,
                     equipoRival,
                     torneo,
-                    localidad,
+                    equipoLocal,
                     dosPuntosIntentados,
                     dosPuntosEmbocados,
                     tresPuntosIntentados,

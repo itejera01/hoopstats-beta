@@ -2,31 +2,20 @@ import { useSQLiteContext } from "expo-sqlite";
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Modal } from 'react-native';
 import { Colors } from '@/constants/Colors';
+import { Equipo, Torneo, Posicion, Jugador as JugadorType } from '@/constants/Types';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
 import TitleComponent from '@/components/titleComponent';
 import JugadorComponent from '@/components/jugadorComponent';
-
-interface Posicion {
-  label: string;
-  value: string;
-}
-
-type Equipo = {
-  id: number,
-  nombre: string,
-}
-type Torneo = {
-  id: number,
-  nombre: string,
-}
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { router } from "expo-router";
 
 export default function Jugador() {
   const [nombre, setNombre] = useState('');
   const [edad, setEdad] = useState(0);
   const [equipo, setEquipo] = useState<Equipo | null>(null);
   const [torneo, setTorneo] = useState<Torneo | null>(null);
-  const [jugadores, setJugadores] = useState<any[]>([]);
+  const [jugadores, setJugadores] = useState<JugadorType[]>([]);
   const [posiblesEquipos, setPosiblesEquipos] = useState<Equipo[]>([]);
   const [posiblesTorneos, setPosiblesTorneos] = useState<Torneo[]>([]);
   const [modalCrearJugador, setModalCrearJugador] = useState(false);
@@ -42,7 +31,7 @@ export default function Jugador() {
   const db = useSQLiteContext();
 
   const loadData = async () => {
-    const jugadoresResult = await db.getFirstAsync<{
+    const jugadoresResult = await db.getAllAsync<{
       id: number;
       nombre: string;
       edad: number;
@@ -52,63 +41,50 @@ export default function Jugador() {
       equipo_nombre: string;
       torneo_nombre: string;
     }>(`
-      SELECT 
-        Jugador.id,
-        Jugador.nombre,
-        Jugador.edad,
-        Jugador.posicion,
-        Jugador.equipo,
-        Jugador.torneo,
-        Equipo.nombre AS equipo_nombre,
-        Torneo.nombre AS torneo_nombre
-      FROM Jugador
-      INNER JOIN Equipo ON Jugador.equipo = Equipo.id
-      INNER JOIN Torneo ON Jugador.torneo = Torneo.id
+        SELECT 
+            Jugador.id,
+            Jugador.nombre,
+            Jugador.edad,
+            Jugador.posicion,
+            Jugador.equipo,
+            Jugador.torneo,
+            Equipo.nombre AS equipo_nombre,
+            Torneo.nombre AS torneo_nombre
+        FROM Jugador
+        INNER JOIN Equipo ON Jugador.equipo = Equipo.id
+        INNER JOIN Torneo ON Jugador.torneo = Torneo.id
     `);
 
     console.log(jugadoresResult);
 
-    if (jugadoresResult) {
-      setNombre(jugadoresResult.nombre);
-      setEdad(jugadoresResult.edad);
-
-      const nuevaPosicion = posiciones.find(p => p.value === jugadoresResult.posicion) || null;
-      setPosicion({
-        label: nuevaPosicion.label,
-        value: nuevaPosicion.value
-      });
-
-      setEquipo({
-        id: jugadoresResult.equipo,
-        nombre: jugadoresResult.equipo_nombre
-      });
-      setTorneo({
-        id: jugadoresResult.torneo,
-        nombre: jugadoresResult.torneo_nombre
-      });
-
-      setJugadores(prevJugadores => [
+    if (jugadoresResult?.length > jugadores.length) {
+      setJugadores((prevJugadores) => [
         ...prevJugadores,
-        {
-          id: jugadoresResult.id,
-          nombre: jugadoresResult.nombre,
-          edad: jugadoresResult.edad,
-          posicion: nuevaPosicion?.value,
-          equipo: {
-            id: jugadoresResult.equipo,
-            nombre: jugadoresResult.equipo_nombre
-          },
-          torneo: {
-            id: jugadoresResult.torneo,
-            nombre: jugadoresResult.torneo_nombre
-          }
-        }
+        ...jugadoresResult.map((item) => {
+          const nuevaPosicion = posiciones.find(p => p.value === item.posicion) || null;
+
+          return {
+            id: item.id,
+            nombre: item.nombre,
+            edad: item.edad,
+            posicion: nuevaPosicion?.value || null,
+            equipo: {
+              id: item.equipo,
+              nombre: item.equipo_nombre
+            },
+            torneo: {
+              id: item.torneo,
+              nombre: item.torneo_nombre
+            }
+          };
+        })
       ]);
     }
 
-    const equiposResult = await db.getAllAsync<{ id: number, nombre: string }>("SELECT * FROM Equipo");
+    const equiposResult = await db.getAllAsync<{ id: number; nombre: string }>("SELECT * FROM Equipo");
     setPosiblesEquipos(equiposResult);
-    const torneosResult = await db.getAllAsync<{ id: number, nombre: string }>("SELECT * FROM Torneo");
+
+    const torneosResult = await db.getAllAsync<{ id: number; nombre: string }>("SELECT * FROM Torneo");
     setPosiblesTorneos(torneosResult);
   };
 
@@ -118,53 +94,59 @@ export default function Jugador() {
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [jugadores]);
 
   useEffect(() => {
     const fetchPosiblesTorneos = async () => {
+      if (!equipo?.id) return;
       try {
         const torneosHabilitados = await db.getAllAsync<{ id: number, nombre: string }>(`
           SELECT Torneo.id AS id, Torneo.nombre 
           FROM Equipo_Torneo
           INNER JOIN Torneo ON Equipo_Torneo.Torneo = Torneo.id
           WHERE Equipo_Torneo.Equipo = ?`,
-          [equipo?.id]
+          [equipo.id]
         );
         setPosiblesTorneos(torneosHabilitados);
       } catch (error) {
         console.error("Error al obtener los torneos habilitados:", error);
       }
     };
+    fetchPosiblesTorneos();
+  }, [equipo?.id]); // Optimización: solo depende de `equipo.id`
 
-    if (equipo && equipo.id !== 0) {
-      fetchPosiblesTorneos();
-    }
-  }, [equipo]);
 
   const agregarJugador = async () => {
     if (nombre === '' || equipo?.id === 0 || edad === 0 || torneo?.id === 0 || posicion === null) {
       alert('Por favor complete todos los campos.');
       return;
     }
-    const jugador = {
+    await db.runAsync(
+      "INSERT INTO Jugador (nombre, edad, posicion, equipo, torneo) VALUES (?, ?, ?, ?, ?)",
+      [nombre, edad, posicion.value, equipo.id, torneo.id]
+    );
+
+    const nuevoJugadorId = await db.getFirstAsync<{ id: number }>(
+      "SELECT last_insert_rowid() AS id"
+    );
+
+    const nuevoJugador: JugadorType = {
+      id: nuevoJugadorId.id,
       nombre,
       edad,
-      posicion: posicion?.value,
-      equipo: equipo?.id,
-      torneo: torneo?.id,
+      posicion: posicion.value,
+      equipo: { id: equipo.id, nombre: equipo.nombre },
+      torneo: { id: torneo.id, nombre: torneo.nombre },
     };
-    const response = await db.runAsync(
-      "INSERT INTO Jugador (nombre, edad, posicion, equipo, torneo) VALUES (?, ?, ?, ?, ?)",
-      [jugador.nombre, jugador.edad, jugador.posicion, jugador.equipo, jugador.torneo]
-    );
-    console.log(response);
-    setJugadores([...jugadores, jugador]);
+
+    setJugadores([...jugadores, nuevoJugador]);
     setNombre('');
     setEdad(0);
     setEquipo(null);
     setTorneo(null);
-    setModalCrearJugador(!modalCrearJugador);
+    setModalCrearJugador(false);
   };
+
 
   const toggleModalCrearJugador = () => setModalCrearJugador(!modalCrearJugador);
 
@@ -186,6 +168,7 @@ export default function Jugador() {
             jugadores.map((jugador) => (
               <JugadorComponent
                 key={jugador.id}
+                id={jugador.id}
                 nombre={jugador.nombre}
                 edad={jugador.edad}
                 posicion={jugador.posicion}
@@ -264,6 +247,14 @@ export default function Jugador() {
           </View>
         </Modal>
       </View >
+      <TouchableOpacity
+        style={[styles.helpButton, styles.refreshButton]}
+        onPress={() => [router.push('/jugador'), setJugadores([])]}
+      >
+        <Text style={styles.helpButtonText}>
+          <FontAwesome name="refresh" size={22} />
+        </Text>
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.helpButton}
         onPress={() => toggleModalCrearJugador()}
@@ -384,6 +375,10 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 32,
     fontWeight: 'bold',
+  },
+  refreshButton: {
+    bottom: 20,
+    left: 20,
   },
   dropdownContainer: {
     width: '100%',

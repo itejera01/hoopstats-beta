@@ -8,27 +8,79 @@ import {
   ScrollView,
 } from "react-native";
 import { Colors } from "@/constants/Colors";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { Jugador, Posicion } from "@/constants/Types";
+import { useSQLiteContext } from "expo-sqlite";
 interface jugadorDropDownComponentProps {
   placeholder: string;
-  onSelect: (item: string) => void;
+  onSelect: (item: Jugador) => void;
 }
 
 const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ placeholder, onSelect }) => {
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedValue, setSelectedValue] = useState('');
-  const [jugadores, setJugadores] = useState([]);
+  const [selectedValue, setSelectedValue] = useState<Jugador | null>(null);
+  const [jugadores, setJugadores] = useState<Jugador[]>([]);
+  const db = useSQLiteContext();
+
+  const posiciones: Posicion[] = [
+    { label: 'BA', value: 'Base' },
+    { label: 'ES', value: 'Escolta' },
+    { label: 'AL', value: 'Alero' },
+    { label: 'AP', value: 'Ala-Pivot' },
+    { label: 'P', value: 'Pivot' },
+  ];
 
   useEffect(() => {
+    const getJugadores = async () => {
+      const jugadoresElegibles = await db.getAllAsync<{
+        id: number;
+        nombre: string;
+        edad: number;
+        posicion: string;
+        equipo: number;
+        torneo: number;
+        equipo_nombre: string;
+        torneo_nombre: string;
+      }>(`
+          SELECT 
+              Jugador.id,
+              Jugador.nombre,
+              Jugador.edad,
+              Jugador.posicion,
+              Jugador.equipo,
+              Jugador.torneo,
+              Equipo.nombre AS equipo_nombre,
+              Torneo.nombre AS torneo_nombre
+          FROM Jugador
+          INNER JOIN Equipo ON Jugador.equipo = Equipo.id
+          INNER JOIN Torneo ON Jugador.torneo = Torneo.id
+      `);
+      setJugadores((prevJugadores) => {
+        const nuevosJugadores = jugadoresElegibles
+          .filter(item => !prevJugadores.some(jugador => jugador.id === item.id)) // Filtra los duplicados
+          .map((item) => {
+            const nuevaPosicion = posiciones.find(p => p.value === item.posicion) || null;
+
+            return {
+              id: item.id,
+              nombre: item.nombre,
+              edad: item.edad,
+              posicion: nuevaPosicion?.value || null,
+              equipo: {
+                id: item.equipo,
+                nombre: item.equipo_nombre
+              },
+              torneo: {
+                id: item.torneo,
+                nombre: item.torneo_nombre
+              }
+            };
+          });
+        return [...prevJugadores, ...nuevosJugadores];
+      });
+
+    }
     try {
-      AsyncStorage.getItem('jugadores').then((value: any) => {
-        if (value) {
-          setJugadores(JSON.parse(value));
-        } else {
-          setJugadores([]);
-        }
-      })
+      getJugadores();
     } catch (e) {
       console.log(e);
     }
@@ -36,16 +88,16 @@ const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ pla
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setSelectedValue('');
+    setSelectedValue(null);
   }
 
-  const handleSelect = (item: any) => {
-    setSelectedValue(item.nombre)
+  const handleSelect = (item: Jugador) => {
+    setSelectedValue(item)
     onSelect(selectedValue)
   };
 
   useEffect(() => {
-    if (selectedValue != '') {
+    if (selectedValue != null) {
       onSelect(selectedValue);
       setModalVisible(!isModalVisible);
     }
@@ -55,7 +107,7 @@ const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ pla
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.button} onPress={toggleModal}>
-        <Text style={styles.buttonText}>{selectedValue || placeholder}</Text>
+        <Text style={styles.buttonText}>{selectedValue?.nombre || placeholder}</Text>
       </TouchableOpacity>
 
       <Modal visible={isModalVisible} transparent animationType="slide">
@@ -67,7 +119,7 @@ const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ pla
                 style={styles.option}
                 onPress={() => { handleSelect(item) }}
               >
-                <Text style={styles.optionText}>{item.nombre}</Text>
+                <Text style={styles.optionText}>{item?.nombre}</Text>
               </TouchableOpacity>
             )) : null}
           </ScrollView>
