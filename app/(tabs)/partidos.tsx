@@ -9,9 +9,11 @@ import TitleComponent from '@/components/titleComponent';
 import PartidoComponent from '@/components/partidoComponent';
 import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
 import JugadorDropDownComponent from '@/components/jugadorDropDownComponent';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { router } from 'expo-router';
 
 export default function Partidos() {
-  const [partidos, setPartidos] = useState<Partido[]>([]);
+  const [partidos, setPartidos] = useState([]);
   const [posiblesRivales, setPosiblesRivales] = useState<Equipo[]>([]);
   const [torneo, setTorneo] = useState<Torneo | null>(null);
   const [equipoJugador, setEquipoJugador] = useState<Equipo | null>(null);
@@ -29,14 +31,31 @@ export default function Partidos() {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        const partidos = await db.getAllAsync<Partido>("SELECT * FROM Partidos");
-        setPartidos(partidos || []);
+        const partidos = await db.getAllAsync<Partido>(`
+          SELECT 
+            P.id, 
+            P.fecha, 
+            P.inicio, 
+            P.jugado, 
+            J.id AS jugador, 
+            EJ.nombre AS equipoJugador_nombre, 
+            ER.nombre AS equipoRival_nombre, 
+            EL.nombre AS equipoLocal_nombre,
+            T.nombre AS torneo_nombre
+          FROM Partidos P
+          INNER JOIN Jugador J ON P.jugador = J.id
+          INNER JOIN Equipo EJ ON P.equipoJugador = EJ.id
+          INNER JOIN Equipo ER ON P.equipoRival = ER.id
+          INNER JOIN Equipo EL ON P.equipoLocal = EL.id
+          INNER JOIN Torneo T ON P.torneo = T.id
+        `);
+        setPartidos(partidos);
       } catch (error) {
-        console.error("Error fetching partidos:", error);
+        error("Error fetching partidos:", error);
       }
     };
     fetchPartidos();
-  }, []);
+  }, [partidos]);
 
   useEffect(() => {
     const fetchEquipos = async () => {
@@ -122,11 +141,11 @@ export default function Partidos() {
 
     const nuevoPartido: Partido = {
       id: 0,
-      jugador: jugadorSeleccionado.id,
-      equipoJugador: equipoJugador.id,
-      equipoRival: equipoRival.id,
-      torneo: torneo.id,
-      equipoLocal: equipoLocal.id,
+      jugador: jugadorSeleccionado,
+      equipoJugador: equipoJugador,
+      equipoRival: equipoRival,
+      torneo: torneo,
+      equipoLocal: equipoLocal,
       fecha: moment(fecha || undefined).format("DD/MM/YYYY"),
       inicio: moment(inicio || undefined).format("HH:mm"),
       jugado: 0,
@@ -136,11 +155,11 @@ export default function Partidos() {
       await db.runAsync(
         "INSERT INTO Partidos (jugador, equipoJugador, equipoRival, torneo, equipoLocal, fecha, inicio, jugado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         [
-          nuevoPartido.jugador,
-          nuevoPartido.equipoJugador,
-          nuevoPartido.equipoRival,
-          nuevoPartido.torneo,
-          nuevoPartido.equipoLocal,
+          nuevoPartido.jugador?.id,
+          nuevoPartido.equipoJugador?.id,
+          nuevoPartido.equipoRival?.id,
+          nuevoPartido.torneo?.id,
+          nuevoPartido.equipoLocal?.id,
           nuevoPartido.fecha,
           nuevoPartido.inicio,
           nuevoPartido.jugado,
@@ -184,13 +203,14 @@ export default function Partidos() {
               .map((partido) => (
                 <PartidoComponent
                   key={partido.id}
-                  fecha={partido.fecha}
-                  inicio={partido.inicio}
-                  jugadorSeleccionado={partido.jugador}
-                  equipoJugador={partido.equipoJugador}
-                  equipoRival={partido.equipoRival}
-                  torneo={partido.torneo}
-                  equipoLocal={partido.equipoLocal}
+                  partido={partido.id}
+                  fecha={partido.fecha ?? "Fecha no disponible"}
+                  inicio={partido.inicio ?? "Hora no disponible"}
+                  jugador={partido.jugador}
+                  equipoJugador={partido.equipoJugador_nombre ?? "Equipo no definido"}
+                  equipoRival={partido.equipoRival_nombre ?? "Rival no definido"}
+                  torneo={partido.torneo_nombre ?? "Torneo no especificado"}
+                  equipoLocal={partido.equipoLocal_nombre ?? "Local no definido"}
                 />
               ))
           ) : (
@@ -299,6 +319,14 @@ export default function Partidos() {
           </View>
         </Modal>
       </View>
+      <TouchableOpacity
+        style={[styles.helpButton, styles.refreshButton]}
+        onPress={() => [router.push('/partidos'), setPartidos([])]}
+      >
+        <Text style={styles.helpButtonText}>
+          <FontAwesome name="refresh" size={22} />
+        </Text>
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.helpButton}
         onPress={toggleModalCrearPartido}
@@ -436,6 +464,10 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 32,
     fontWeight: 'bold',
+  },
+  refreshButton: {
+    bottom: 20,
+    left: 20,
   },
   dropdownContainer: {
     width: '100%',
