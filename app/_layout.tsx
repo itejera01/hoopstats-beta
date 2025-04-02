@@ -56,6 +56,8 @@ CREATE TABLE
   IF NOT EXISTS Estadisticas_Jugador_Partido (
     partido INTEGER NOT NULL,
     jugador INTEGER NOT NULL,
+    puntos_equipo_jugador INTEGER DEFAULT 0,
+    puntos_equipo_rival INTEGER DEFAULT 0,
     puntos INTEGER DEFAULT 0,
     asistencias INTEGER DEFAULT 0,
     rebotes INTEGER DEFAULT 0,
@@ -98,7 +100,10 @@ CREATE TABLE
   );
       `
     );
-    console.log(response)
+    const tablas = await db.getAllAsync(
+      `SELECT name, sql FROM sqlite_master WHERE type='table'`
+    )
+    console.log(tablas)
   } catch (error) {
     console.error(error);
   }
@@ -112,7 +117,7 @@ export default function RootLayout() {
   if (!loaded) return null;
   return (
     <>
-      <SQLiteProvider databaseName='hoopStatsDB.db' onInit={createDbIfNeeded}>
+      <SQLiteProvider databaseName='hoopStat.db' onInit={createDbIfNeeded}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }}></Stack.Screen>
           <Stack.Screen name="+not-found" options={{ headerShown: false }}></Stack.Screen>
