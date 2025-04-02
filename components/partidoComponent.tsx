@@ -1,28 +1,32 @@
 import { Colors } from '@/constants/Colors';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Modal, TextInput } from 'react-native';
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import RelojComponent from './relojComponent';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { Partido, Jugador, Equipo, Torneo } from '@/constants/Types';
+import { useSQLiteContext } from 'expo-sqlite';
 export default function partidoComponent({
   fecha,
+  partido,
   inicio,
-  jugadorSeleccionado,
+  jugador,
   equipoJugador,
   equipoRival,
   torneo,
   equipoLocal,
 }: {
   fecha: string;
+  partido: number;
   inicio: string;
-  jugadorSeleccionado: number;
-  equipoJugador: number;
-  equipoRival: number;
-  torneo: number;
-  equipoLocal: number;
+  jugador: number;
+  equipoJugador: string;
+  equipoRival: string;
+  equipoLocal: string;
+  torneo: string;
 }) {
   const [statsVisible, setStatsVisible] = useState(false);
+  const [puntosEquipoJugador, setPuntosEquipoJugador] = useState(0);
+  const [puntosEquipoRival, setPuntosEquipoRival] = useState(0);
   const [dosPuntosIntentados, setDosPuntosIntentados] = useState(0);
   const [dosPuntosEmbocados, setDosPuntosEmbocados] = useState(0);
   const [tresPuntosIntentados, setTresPuntosIntentados] = useState(0);
@@ -39,303 +43,357 @@ export default function partidoComponent({
 
   const toggleStatsVisible = () => setStatsVisible(!statsVisible);
 
-
+  const db = useSQLiteContext();
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.infoJugador} onPress={toggleStatsVisible}>
-        <View style={styles.imageContainer}>
-          <Text style={styles.text}>(escudo)</Text>
-        </View>
-        <View>
-          <Text style={[styles.text, styles.partido]}>{equipoJugador} vs {equipoRival}</Text>
-          <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
-          <Text style={[styles.text, styles.datosEquipo]}>En {equipoLocal}</Text>
-          <Text style={[styles.text, styles.datosEquipo]}>{fecha} - {inicio}</Text>
+        <View style={{ flexDirection: 'column', justifyContent: 'space-around', alignItems: 'center', width: '100%' }}>
+          <View style={{ flexDirection: 'row' }}>
+            <View style={styles.imageContainer}>
+              <Text style={styles.text}>(escudo 1)</Text>
+            </View>
+            <View style={{justifyContent: 'center', alignItems: 'center'}}>
+              <Text style={styles.text}>VS</Text>
+            </View>
+            <View style={styles.imageContainer}>
+              <Text style={styles.text}>(escudo 2)</Text>
+            </View>
+          </View>
+          <View>
+            <View style={{ alignItems: 'center', marginTop: 10 }}>
+              <Text style={[styles.text, styles.partido]}>{torneo}</Text>
+              <Text style={[styles.text, styles.datosEquipo]}>{fecha} - {inicio}</Text>
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
-      {statsVisible && (
-        <View style={styles.statsContainer}>
-          <RelojComponent ref={(ref) => {
-            if (ref) {
-              setTiempoJugado(ref.getTime);
-            }
-          }} />
-          <View style={{ flexDirection: 'row' }}>
-            <View style={styles.stats}>
-              <TouchableOpacity
-                onPress={() => {
-                  setDosPuntosEmbocados(0)
-                  setDosPuntosIntentados(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>2PTS</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={styles.buttonStats}
-                  onPress={() => {
-                    setDosPuntosEmbocados(dosPuntosEmbocados + 1)
-                    setDosPuntosIntentados(dosPuntosIntentados + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{dosPuntosEmbocados}</Text>
-                </TouchableOpacity>
-                <Text style={[styles.text, { fontSize: 18 }]}>/</Text>
-                <TouchableOpacity
-                  style={styles.buttonStats}
-                  onPress={() => {
-                    setDosPuntosIntentados(dosPuntosIntentados + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{dosPuntosIntentados}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.stats}>
-              <TouchableOpacity
-                onPress={() => {
-                  setTresPuntosEmbocados(0)
-                  setTresPuntosIntentados(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>3PTS</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={styles.buttonStats}
-                  onPress={() => {
-                    setTresPuntosEmbocados(tresPuntosEmbocados + 1)
-                    setTresPuntosIntentados(tresPuntosIntentados + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{tresPuntosEmbocados}</Text>
-                </TouchableOpacity>
-                <Text style={[styles.text, { fontSize: 18 }]}>/</Text>
-                <TouchableOpacity
-                  style={styles.buttonStats}
-                  onPress={() => {
-                    setTresPuntosIntentados(tresPuntosIntentados + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{tresPuntosIntentados}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.stats}>
-              <TouchableOpacity
-                onPress={() => {
-                  setTirosLibresEmbocados(0)
-                  setTirosLibresIntentados(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>TL</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={styles.buttonStats}
-                  onPress={() => {
-                    setTirosLibresEmbocados(tirosLibresEmbocados + 1)
-                    setTirosLibresIntentados(tirosLibresIntentados + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{tirosLibresEmbocados}</Text>
-                </TouchableOpacity>
-                <Text style={[styles.text, { fontSize: 18 }]}>/</Text>
-                <TouchableOpacity
-                  style={styles.buttonStats}
-                  onPress={() => {
-                    setDosPuntosIntentados(tirosLibresIntentados + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{tirosLibresIntentados}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-          <View style={{ maxWidth: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setAsistencias(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>ASI</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={[styles.buttonStats, { width: '70%' }]}
-                  onPress={() => {
-                    setAsistencias(asistencias + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{asistencias}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setRobos(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>ROB</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={[styles.buttonStats, { width: '70%' }]}
-                  onPress={() => {
-                    setRobos(robos + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{robos}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setRebotes(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>REB</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={[styles.buttonStats, { width: '70%' }]}
-                  onPress={() => {
-                    setRebotes(rebotes + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{rebotes}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setTapones(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>TAP</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={[styles.buttonStats, { width: '70%' }]}
-                  onPress={() => {
-                    setTapones(tapones + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{tapones}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setFaltasCometidas(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>FC</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={[styles.buttonStats, { width: '70%' }]}
-                  onPress={() => {
-                    if (faltasCometidas < 5) {
-                      setFaltasCometidas(faltasCometidas + 1)
-                    }
-                  }}>
-                  <Text
-                    style={[
-                      styles.text,
-                      styles.statsText,
-                      faltasCometidas >= 5 && { color: 'red' },
-                    ]}>
-                    {faltasCometidas}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setPerdidas(0)
-                }}>
-                <Text style={[styles.text, styles.statsTextTitle]}>PER</Text>
-              </TouchableOpacity>
-              <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={[styles.buttonStats, { width: '70%' }]}
-                  onPress={() => {
-                    setPerdidas(perdidas + 1)
-                  }}>
-                  <Text style={[styles.text, styles.statsText]}>{perdidas}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={{
-              marginTop: 20,
-              backgroundColor: Colors.buttonBackground,
-              padding: 10,
-              borderRadius: 10,
-              alignItems: 'center',
-            }}
-            onPress={() => {
-              const saveStats = async () => {
-                try {
-                  const partidoStats = {
-                    fecha,
-                    inicio,
-                    jugadorSeleccionado,
-                    equipoJugador,
-                    equipoRival,
-                    torneo,
-                    equipoLocal,
-                    dosPuntosIntentados,
-                    dosPuntosEmbocados,
-                    tresPuntosIntentados,
-                    tresPuntosEmbocados,
-                    tirosLibresIntentados,
-                    tirosLibresEmbocados,
-                    asistencias,
-                    rebotes,
-                    robos,
-                    tapones,
-                    faltasCometidas,
-                    perdidas,
-                    tiempoJugado,
-                  };
-                  await AsyncStorage.setItem('partidosJugados', JSON.stringify(partidoStats));
-                  console.log('Estadísticas guardadas correctamente');
-                  console.log(JSON.stringify(partidoStats))
-                } catch (error) {
-                  console.error('Error al guardar las estadísticas:', error);
-                }
-              };
-              saveStats();
-            }}
-          >
-            <Text style={[styles.text, { color: Colors.text, fontWeight: 'bold' }]}>
-              Finalizar Partido
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              marginTop: 10,
-              backgroundColor: Colors.buttonBackground,
-              padding: 10,
-              borderRadius: 10,
-              alignItems: 'center',
-            }}
-            onPress={async () => {
-              try {
-                const existingStats = await AsyncStorage.getItem('partidos');
-                if (existingStats) {
-                  const statsArray = JSON.parse(existingStats);
-                  const updatedStats = statsArray.filter(
-                    (partido: any) =>
-                      partido.fecha !== fecha || partido.inicio !== inicio
-                  );
-                  await AsyncStorage.setItem('partidos', JSON.stringify(updatedStats));
-                  console.log('Partido eliminado correctamente');
-                }
-              } catch (error) {
-                console.error('Error al eliminar el partido:', error);
+      <Modal visible={statsVisible} transparent animationType="slide">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <RelojComponent ref={(ref) => {
+              if (ref) {
+                setTiempoJugado(ref.getTime);
               }
-            }}
-          >
-            <Text style={[styles.text, { color: Colors.text, fontWeight: 'bold' }]}>
-              Eliminar Partido
-            </Text>
-          </TouchableOpacity>
+            }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+              <View style={{ justifyContent: 'center', alignItems: 'center', width: '45%' }}>
+                <TextInput
+                  style={[styles.input]}
+                  value={puntosEquipoJugador > 0 ? String(puntosEquipoJugador) : '0'}
+                  onChangeText={(text) => {
+                    setPuntosEquipoJugador(Number(text));
+                  }}
+                  keyboardType='numeric'
+                />
+              </View>
+              <View style={{ justifyContent: 'center', alignItems: 'center', width: '10%' }}>
+                <Text style={styles.text}>-</Text>
+              </View>
+              <View style={{ justifyContent: 'center', alignItems: 'center', width: '45%' }}>
+                <TextInput
+                  style={styles.input}
+                  value={puntosEquipoRival > 0 ? String(puntosEquipoRival) : '0'}
+                  onChangeText={(text) => {
+                    setPuntosEquipoRival(Number(text));
+                  }}
+                  keyboardType='numeric'
+                />
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={styles.stats}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setDosPuntosEmbocados(0)
+                    setDosPuntosIntentados(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>2PTS</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={styles.buttonStats}
+                    onPress={() => {
+                      setDosPuntosEmbocados(dosPuntosEmbocados + 1)
+                      setDosPuntosIntentados(dosPuntosIntentados + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{dosPuntosEmbocados}</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.text, { fontSize: 18 }]}>/</Text>
+                  <TouchableOpacity
+                    style={styles.buttonStats}
+                    onPress={() => {
+                      setDosPuntosIntentados(dosPuntosIntentados + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{dosPuntosIntentados}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.stats}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTresPuntosEmbocados(0)
+                    setTresPuntosIntentados(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>3PTS</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={styles.buttonStats}
+                    onPress={() => {
+                      setTresPuntosEmbocados(tresPuntosEmbocados + 1)
+                      setTresPuntosIntentados(tresPuntosIntentados + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{tresPuntosEmbocados}</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.text, { fontSize: 18 }]}>/</Text>
+                  <TouchableOpacity
+                    style={styles.buttonStats}
+                    onPress={() => {
+                      setTresPuntosIntentados(tresPuntosIntentados + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{tresPuntosIntentados}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.stats}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTirosLibresEmbocados(0)
+                    setTirosLibresIntentados(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>TL</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={styles.buttonStats}
+                    onPress={() => {
+                      setTirosLibresEmbocados(tirosLibresEmbocados + 1)
+                      setTirosLibresIntentados(tirosLibresIntentados + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{tirosLibresEmbocados}</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.text, { fontSize: 18 }]}>/</Text>
+                  <TouchableOpacity
+                    style={styles.buttonStats}
+                    onPress={() => {
+                      setDosPuntosIntentados(tirosLibresIntentados + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{tirosLibresIntentados}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+            <View style={{ maxWidth: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setAsistencias(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>ASI</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '70%' }]}
+                    onPress={() => {
+                      setAsistencias(asistencias + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{asistencias}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setRobos(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>ROB</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '70%' }]}
+                    onPress={() => {
+                      setRobos(robos + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{robos}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setRebotes(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>REB</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '70%' }]}
+                    onPress={() => {
+                      setRebotes(rebotes + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{rebotes}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setTapones(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>TAP</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '70%' }]}
+                    onPress={() => {
+                      setTapones(tapones + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{tapones}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setFaltasCometidas(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>FC</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '70%' }]}
+                    onPress={() => {
+                      if (faltasCometidas < 5) {
+                        setFaltasCometidas(faltasCometidas + 1)
+                      }
+                    }}>
+                    <Text
+                      style={[
+                        styles.text,
+                        styles.statsText,
+                        faltasCometidas >= 5 && { color: 'red' },
+                      ]}>
+                      {faltasCometidas}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={[styles.stats, { width: '15%', marginHorizontal: 2 }]}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setPerdidas(0)
+                  }}>
+                  <Text style={[styles.text, styles.statsTextTitle]}>PER</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '70%' }]}
+                    onPress={() => {
+                      setPerdidas(perdidas + 1)
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>{perdidas}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+
+              <TouchableOpacity
+                style={{
+                  marginTop: 10,
+                  backgroundColor: Colors.buttonBackground,
+                  padding: 10,
+                  borderRadius: 10,
+                  width: '40%',
+                  alignItems: 'center',
+                }}
+                onPress={async () => {
+                  try {
+                    const partidoEncontrado = await db.getAllAsync('SELECT * FROM Partidos WHERE id=?', [partido]);
+                    console.log(partidoEncontrado);
+                    if (partidoEncontrado) {
+                      const response = await db.runAsync('DELETE FROM Partidos WHERE id=?', [partido]);
+                      console.log('Partido eliminado');
+                    } else {
+                      console.log('No se encontró el partido');
+                    }
+                  } catch (error) {
+                    console.error('Error al eliminar el partido:', error);
+                  }
+                }}
+              >
+                <Text style={[styles.text, { color: Colors.text, fontWeight: 'bold' }]}>
+                  Eliminar Partido
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  marginTop: 10,
+                  backgroundColor: Colors.editButton,
+                  padding: 10,
+                  borderRadius: 10,
+                  width: '40%',
+                  alignItems: 'center',
+                }}
+                onPress={toggleStatsVisible}
+              >
+                <Text style={[styles.text, { color: Colors.menuBackground, fontWeight: 'bold' }]}>
+                  Cancelar
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={{
+                marginTop: 20,
+                backgroundColor: Colors.barDownBackground,
+                padding: 10,
+                borderRadius: 10,
+                alignItems: 'center',
+                width: '100%',
+              }}
+              onPress={() => {
+                const saveStats = async () => {
+                  try {
+                    const partidoStats = {
+                      partido,
+                      jugador,
+                      puntos_equipo_jugador: puntosEquipoJugador,
+                      puntos_equipo_rival: puntosEquipoRival,
+                      puntos: (dosPuntosEmbocados * 2) + (tresPuntosEmbocados * 3) + (tirosLibresEmbocados),
+                      asistencias,
+                      rebotes,
+                      robos,
+                      tapones,
+                      perdidas,
+                      faltas: faltasCometidas,
+                      minutos_jugados: tiempoJugado?.minutes,
+                      dobles_embocados: dosPuntosEmbocados,
+                      dobles_intentados: dosPuntosIntentados,
+                      tiros_libres_intentados: tirosLibresIntentados,
+                      tiros_libres_embocados: tirosLibresEmbocados,
+                      triples_embocados: tresPuntosEmbocados,
+                      triples_intentados: tresPuntosIntentados,
+                    };
+                    console.log(partidoStats)
+                    // await AsyncStorage.setItem('partidosJugados', JSON.stringify(partidoStats));
+                    // console.log('Estadísticas guardadas correctamente');
+                    // console.log(JSON.stringify(partidoStats))
+                  } catch (error) {
+                    console.error('Error al guardar las estadísticas:', error);
+                  }
+                };
+                saveStats();
+              }}
+            >
+              <Text style={[styles.text, { color: Colors.text, fontWeight: 'bold' }]}>
+                Finalizar Partido
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
-    </View>
+      </Modal >
+    </View >
   )
 }
 const styles = StyleSheet.create({
@@ -361,7 +419,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderColor: Colors.appBackground,
     borderWidth: 2,
-    marginRight: 15,
+    marginHorizontal: 15,
     // TEMPORAL
     alignItems: 'center',
     justifyContent: 'center',
@@ -386,12 +444,28 @@ const styles = StyleSheet.create({
     color: Colors.text,
     margin: 2,
   },
-  statsContainer: {
-    backgroundColor: Colors.menuBackground,
-    height: 'auto',
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
+  modalContainer: {
+    flex: 1,
     width: '100%',
+    position: 'absolute',
+    maxWidth: 400, // Limita el ancho máximo para pantallas grandes
+    maxHeight: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+    backgroundColor: Colors.menuBackground,
+    padding: 20, // Agrega espacio interno
+    shadowColor: '#000', // Sombra para darle profundidad
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5, // Sombra para Android
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   stats: {
     margin: 15,
@@ -416,5 +490,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
+  input: {
+    width: '100%',
+    height: 50,
+    marginBottom: 15, // Reduce el espacio entre inputs
+    borderBottomWidth: 1, // Haz la línea más delgada
+    borderColor: Colors.barDownBackground,
+    color: Colors.text,
+    fontSize: 16,
+    textAlign: 'center',
+    borderRadius: 8, // Bordes redondeados
+    paddingHorizontal: 10, // Espacio interno
+  },
 })
