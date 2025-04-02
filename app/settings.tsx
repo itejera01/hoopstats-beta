@@ -33,18 +33,18 @@ export default function settingsModal() {
       try {
         const equiposDatabase = await database.getAllAsync<{ id: number, nombre: string }>("SELECT * FROM Equipo");
         console.log(equiposDatabase)
-        if (equiposDatabase) {
+        if (equiposDatabase && equiposDatabase.length > 0) {
           setEquipos(equiposDatabase)
           setEquiposCargados(!equiposCargados)
         }
         const torneosDatabase = await database.getAllAsync<{ id: number, nombre: string }>("SELECT * FROM Torneo");
         console.log(torneosDatabase)
-        if (torneosDatabase) {
+        if (torneosDatabase && torneosDatabase.length > 0) {
           setTorneos(torneosDatabase)
           setTorneosCargados(!torneosCargados)
         }
-      const equipoTorneoDatabase = await database.getAllAsync<{ equipo: number, torneo: number }>("SELECT * FROM Equipo_Torneo");
-      console.log(equipoTorneoDatabase)
+        const equipoTorneoDatabase = await database.getAllAsync<{ equipo: number, torneo: number }>("SELECT * FROM Equipo_Torneo");
+        console.log(equipoTorneoDatabase)
 
       } catch (error) {
         console.log(error);
@@ -402,7 +402,6 @@ VALUES
     }
   };
 
-
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: "Configuración" }} />
@@ -429,7 +428,7 @@ VALUES
         <EquiposDropDownComponent
           placeholder="Verificar Equipos"
           data={equipos}
-          onSelect={undefined}
+          onSelect={(item) => console.log(item)}
         />
 
       </View>
@@ -448,7 +447,7 @@ VALUES
         <TorneosDropDownComponent
           placeholder="Verificar Torneos"
           data={torneos}
-          onSelect={undefined}
+          onSelect={(item) => console.log(item)}
         />
       </View>
     </SafeAreaView>
