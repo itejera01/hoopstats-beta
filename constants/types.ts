@@ -9,11 +9,11 @@ export type Jugador = {
 
 export type Partido = {
   id: number,
-  jugador: number,
-  equipoJugador: number,
-  equipoRival: number,
-  equipoLocal: number,
-  torneo: number,
+  jugador: Jugador,
+  equipoJugador: Equipo,
+  equipoRival: Equipo,
+  equipoLocal: Equipo,
+  torneo: Torneo,
   fecha: string,
   inicio: string,
   jugado: number,
