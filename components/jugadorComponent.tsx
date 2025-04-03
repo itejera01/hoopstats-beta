@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { Jugador } from '@/constants/Types';
+import EscudosComponent from '@/components/escudosComponent';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useSQLiteContext } from 'expo-sqlite';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
@@ -181,9 +182,7 @@ export default function JugadorComponent(
     <View style={styles.container}>
       <TouchableOpacity style={styles.infoJugador} onPress={() => setShowStats(!showStats)}>
         <View>
-          <View style={styles.imageContainer}>
-            <Text style={styles.text}>(escudo)</Text>
-          </View>
+          <EscudosComponent teamName={equipo}/>
         </View>
         <View>
           <Text style={[styles.text, styles.nombre]}>{nombre}</Text>

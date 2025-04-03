@@ -5,6 +5,7 @@ import { TouchableOpacity } from 'react-native';
 import RelojComponent from './relojComponent';
 import { Partido, Jugador, Equipo, Torneo } from '@/constants/Types';
 import { useSQLiteContext } from 'expo-sqlite';
+import EscudosComponent from './escudosComponent';
 export default function partidoComponent({
   fecha,
   partido,
@@ -50,15 +51,19 @@ export default function partidoComponent({
       <TouchableOpacity style={styles.infoJugador} onPress={toggleStatsVisible}>
         <View style={{ flexDirection: 'column', justifyContent: 'space-around', alignItems: 'center', width: '100%' }}>
           <View style={{ flexDirection: 'row' }}>
-            <View style={styles.imageContainer}>
-              <Text style={styles.text}>(escudo 1)</Text>
-            </View>
-            <View style={{justifyContent: 'center', alignItems: 'center'}}>
+            {equipoLocal == equipoJugador ? (
+              <EscudosComponent teamName={equipoJugador} />
+            ) : (
+              <EscudosComponent teamName={equipoRival} />
+            )}
+            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
               <Text style={styles.text}>VS</Text>
             </View>
-            <View style={styles.imageContainer}>
-              <Text style={styles.text}>(escudo 2)</Text>
-            </View>
+            {equipoLocal != equipoJugador ? (
+              <EscudosComponent teamName={equipoJugador} />
+            ) : (
+              <EscudosComponent teamName={equipoRival} />
+            )}
           </View>
           <View>
             <View style={{ alignItems: 'center', marginTop: 10 }}>
@@ -67,7 +72,7 @@ export default function partidoComponent({
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity >
       <Modal visible={statsVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
