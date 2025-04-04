@@ -48,6 +48,7 @@ export default function Partidos() {
           INNER JOIN Equipo ER ON P.equipoRival = ER.id
           INNER JOIN Equipo EL ON P.equipoLocal = EL.id
           INNER JOIN Torneo T ON P.torneo = T.id
+          WHERE P.jugado = 0
         `);
         setPartidos(partidos);
       } catch (error) {

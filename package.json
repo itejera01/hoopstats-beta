@@ -17,7 +17,6 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "^2.1.2",
-    "@react-native-community/datetimepicker": "8.2.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "expo": "^52.0.41",
@@ -54,8 +53,8 @@
     "tinybase": "^5.4.9"
   },
   "devDependencies": {
-    "@react-native-community/cli": "latest",
     "@babel/core": "^7.25.2",
+    "@react-native-community/cli": "latest",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^18.3.0",

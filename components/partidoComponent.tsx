@@ -182,7 +182,7 @@ export default function partidoComponent({
                   <TouchableOpacity
                     style={styles.buttonStats}
                     onPress={() => {
-                      setDosPuntosIntentados(tirosLibresIntentados + 1)
+                      setTirosLibresIntentados(tirosLibresIntentados + 1)
                     }}>
                     <Text style={[styles.text, styles.statsText]}>{tirosLibresIntentados}</Text>
                   </TouchableOpacity>
@@ -361,29 +361,56 @@ export default function partidoComponent({
                 const saveStats = async () => {
                   try {
                     const partidoStats = {
-                      partido,
-                      jugador,
-                      puntos_equipo_jugador: puntosEquipoJugador,
-                      puntos_equipo_rival: puntosEquipoRival,
-                      puntos: (dosPuntosEmbocados * 2) + (tresPuntosEmbocados * 3) + (tirosLibresEmbocados),
-                      asistencias,
-                      rebotes,
-                      robos,
-                      tapones,
-                      perdidas,
-                      faltas: faltasCometidas,
-                      minutos_jugados: tiempoJugado?.minutes,
-                      dobles_embocados: dosPuntosEmbocados,
-                      dobles_intentados: dosPuntosIntentados,
-                      tiros_libres_intentados: tirosLibresIntentados,
-                      tiros_libres_embocados: tirosLibresEmbocados,
-                      triples_embocados: tresPuntosEmbocados,
-                      triples_intentados: tresPuntosIntentados,
+                      partido, // ID del partido
+                      jugador, // ID del jugador
+                      puntos_equipo_jugador: puntosEquipoJugador, // Puntos del equipo jugador
+                      puntos_equipo_rival: puntosEquipoRival, // Puntos del equipo rival
+                      puntos: (dosPuntosEmbocados * 2) + (tresPuntosEmbocados * 3) + (tirosLibresEmbocados), // Total de puntos (dobles, triples, libres)
+                      asistencias, // Asistencias
+                      rebotes, // Rebotes
+                      robos, // Robos
+                      tapones, // Bloqueos (o tapones, asegúrate de que sea lo que quieres)
+                      perdidas, // Pérdidas
+                      faltas: faltasCometidas, // Faltas cometidas
+                      minutos_jugados: tiempoJugado?.minutes, // Minutos jugados
+                      dobles_embocados: dosPuntosEmbocados, // Dobles embocados
+                      dobles_intentados: dosPuntosIntentados, // Dobles intentados
+                      tiros_libres_intentados: tirosLibresIntentados, // Tiros libres intentados
+                      tiros_libres_embocados: tirosLibresEmbocados, // Tiros libres embocados
+                      triples_intentados: tresPuntosIntentados, // Triples intentados
+                      triples_embocados: tresPuntosEmbocados, // Triples embocados
                     };
-                    console.log(partidoStats)
-                    // await AsyncStorage.setItem('partidosJugados', JSON.stringify(partidoStats));
-                    // console.log('Estadísticas guardadas correctamente');
-                    // console.log(JSON.stringify(partidoStats))
+                    const values = [
+                      partidoStats.partido,
+                      partidoStats.jugador,
+                      partidoStats.puntos_equipo_jugador,
+                      partidoStats.puntos_equipo_rival,
+                      partidoStats.puntos,
+                      partidoStats.asistencias,
+                      partidoStats.rebotes,
+                      partidoStats.robos,
+                      partidoStats.tapones, // Aquí se ajusta el nombre de "tapones"
+                      partidoStats.perdidas,
+                      partidoStats.faltas,
+                      partidoStats.minutos_jugados,
+                      partidoStats.dobles_embocados,
+                      partidoStats.dobles_intentados,
+                      partidoStats.tiros_libres_intentados,
+                      partidoStats.tiros_libres_embocados,
+                      partidoStats.triples_intentados,
+                      partidoStats.triples_embocados,
+                    ];
+                    await db.runAsync('UPDATE Partidos set Jugado=1 WHERE id=?', [partido]);
+                    await db.runAsync(`
+                      INSERT INTO Estadisticas_Jugador_Partido (
+                        partido, jugador, puntos_equipo_jugador, puntos_equipo_rival,
+                        puntos, asistencias, rebotes, robos, bloqueos, perdidas,
+                        faltas, minutos_jugados, dobles_embocados, dobles_intentados,
+                        tiros_libres_intentados, tiros_libres_embocados,
+                        triples_intentados, triples_embocados
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, values);
+
                   } catch (error) {
                     console.error('Error al guardar las estadísticas:', error);
                   }
