@@ -45,21 +45,21 @@ export default function JugadorComponent(
     return [
       {
         label: 'MIN/P',
-        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.minutosJugados) || 0), 0) / partidos.length).toFixed(1),
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.minutos_jugados) || 0), 0) / partidos.length).toFixed(1),
       },
       {
         label: 'PTS/P',
         value: (partidos.reduce((acc: number, partido: any) => {
-          return acc + (Number(partido.dosPuntosEmbocados) || 0) * 2
-            + (Number(partido.tresPuntosEmbocados) || 0) * 3
-            + (Number(partido.tirosLibresEmbocados) || 0);
+          return acc + (Number(partido.dobles_embocados) || 0) * 2
+            + (Number(partido.triples_embocados) || 0) * 3
+            + (Number(partido.tiros_libres_embocados) || 0);
         }, 0) / partidos.length).toFixed(1),
       },
       {
         label: 'TC%',
         value: (() => {
-          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosIntentados || 0) + (partido.tresPuntosIntentados || 0), 0);
-          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosEmbocados || 0) + (partido.tresPuntosEmbocados || 0), 0);
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dobles_intentados || 0) + (partido.triples_intentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.dobles_embocados || 0) + (partido.triples_embocados || 0), 0);
           return totalIntentados > 0
             ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
             : '00.0%';
@@ -68,8 +68,8 @@ export default function JugadorComponent(
       {
         label: '2PTS%',
         value: (() => {
-          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosIntentados || 0), 0);
-          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.dosPuntosEmbocados || 0), 0);
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.dobles_intentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.dobles_embocados || 0), 0);
           return totalIntentados > 0
             ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
             : '00.0%';
@@ -78,8 +78,8 @@ export default function JugadorComponent(
       {
         label: '3PTS%',
         value: (() => {
-          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.tresPuntosIntentados || 0), 0);
-          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.tresPuntosEmbocados || 0), 0);
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.triples_intentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.triples_embocados || 0), 0);
           return totalIntentados > 0
             ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
             : '00.0%';
@@ -88,8 +88,8 @@ export default function JugadorComponent(
       {
         label: 'TL%',
         value: (() => {
-          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.tirosLibresIntentados || 0), 0);
-          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.tirosLibresEmbocados || 0), 0);
+          const totalIntentados = partidos.reduce((acc: number, partido: any) => acc + (partido.tiros_libres_intentados || 0), 0);
+          const totalEmbocados = partidos.reduce((acc: number, partido: any) => acc + (partido.tiros_libres_embocados || 0), 0);
           return totalIntentados > 0
             ? `${((totalEmbocados / totalIntentados) * 100).toFixed(1)}%`
             : '00.0%';
@@ -97,7 +97,7 @@ export default function JugadorComponent(
       },
       {
         label: 'FC/P',
-        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.faltasCometidas) || 0), 0) / partidos.length).toFixed(1),
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.faltas) || 0), 0) / partidos.length).toFixed(1),
       },
       {
         label: 'ASI/P',
@@ -105,7 +105,7 @@ export default function JugadorComponent(
       },
       {
         label: 'TAP/P',
-        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.tapones) || 0), 0) / partidos.length).toFixed(1),
+        value: (partidos.reduce((acc: number, partido: any) => acc + (Number(partido.bloqueos) || 0), 0) / partidos.length).toFixed(1),
       },
       {
         label: 'REB/P',
@@ -118,21 +118,21 @@ export default function JugadorComponent(
       {
         label: 'EFI',
         value: (partidos.reduce((acc: number, partido: any) => {
-          const puntos = (Number(partido.dosPuntosEmbocados) || 0) * 2
-            + (Number(partido.tresPuntosEmbocados) || 0) * 3
-            + (Number(partido.tirosLibresEmbocados) || 0);
+          const puntos = (Number(partido.dobles_embocados) || 0) * 2
+            + (Number(partido.triples_embocados) || 0) * 3
+            + (Number(partido.tiros_libres_embocados) || 0);
           const rebotes = Number(partido.rebotes) || 0;
           const asistencias = Number(partido.asistencias) || 0;
           const robos = Number(partido.robos) || 0;
-          const tapones = Number(partido.tapones) || 0;
+          const tapones = Number(partido.bloqueos) || 0;
 
-          const tirosCampoFallados = (Number(partido.dosPuntosIntentados) || 0)
-            + (Number(partido.tresPuntosIntentados) || 0) -
-            ((Number(partido.dosPuntosEmbocados) || 0) + (Number(partido.tresPuntosEmbocados) || 0));
+          const tirosCampoFallados = (Number(partido.dobles_intentados) || 0)
+            + (Number(partido.triples_intentados) || 0) -
+            ((Number(partido.dobles_embocados) || 0) + (Number(partido.triples_embocados) || 0));
 
-          const tirosLibresFallados = (Number(partido.tirosLibresIntentados) || 0) - (Number(partido.tirosLibresEmbocados) || 0);
+          const tirosLibresFallados = (Number(partido.tiros_libres_intentados) || 0) - (Number(partido.tiros_libes_embocados) || 0);
           const perdidas = Number(partido.perdidas) || 0;
-          const faltasRealizadas = Number(partido.faltasCometidas) || 0;
+          const faltasRealizadas = Number(partido.faltas) || 0;
 
           const eficiencia = (puntos + rebotes + asistencias + robos + tapones)
             - (tirosCampoFallados + tirosLibresFallados + perdidas + faltasRealizadas);
