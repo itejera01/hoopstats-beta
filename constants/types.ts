@@ -20,22 +20,22 @@ export type Partido = {
 }
 
 export type Estadisticas_Partido = {
-  partido: number;
-  jugador: number;
-  puntos_equipo_jugador: number;
-  puntos_equipo_rival: number;
-  puntos: number;
-  asistencias: number;
-  rebotes: number;
-  robos: number;
-  bloqueos: number;
-  perdidas: number;
-  faltas: number;
-  minutos_jugados: number;
-  dobles_embocados: number;
-  dobles_intentados: number;
-  tiros_libres_intentados: number;
-  tiros_libres_embocados: number;
+  partido : number;
+  jugador : number;
+  puntos_equipo_jugador : number;
+  puntos_equipo_rival : number;
+  puntos : number;
+  asistencias : number;
+  rebotes : number;
+  robos : number;
+  bloqueos : number;
+  perdidas : number;
+  faltas : number;
+  minutos_jugados : number;
+  dobles_embocados : number;
+  dobles_intentados : number;
+  tiros_libres_intentados : number;
+  tiros_libres_embocados : number;
   triples_intentados: number;
   triples_embocados: number;
 }

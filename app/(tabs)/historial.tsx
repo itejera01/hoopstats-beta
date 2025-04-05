@@ -1,38 +1,70 @@
 import React, { useEffect, useState } from 'react';
 import { Colors } from '@/constants/Colors';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import TitleComponent from '@/components/titleComponent';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { useSQLiteContext } from 'expo-sqlite';
+import { Partido, Estadisticas_Partido } from '@/constants/Types';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { router } from 'expo-router';
+import HistorialComponent from '@/components/historialComponent';
 export default function Historial() {
-  const [partidos, setPartidos] = useState<string[]>([]);
+  const [partidos, setPartidos] = useState<Partido[]>([]);
+  const [stats, setStats] = useState<Estadisticas_Partido[]>([]);
+  const [partidosJugados, setPartidosJugados] = useState([]);
 
+  const db = useSQLiteContext();
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        const partidosData = await AsyncStorage.getItem('partidosJugados');
-        if (partidosData) {
-          const parsedPartidos = JSON.parse(partidosData);
-          setPartidos(Array.isArray(parsedPartidos) ? parsedPartidos.flat() : []);
+        const partidosJugados = await db.getAllAsync<Partido>('SELECT * FROM Partidos where jugado=1');
+        if (partidosJugados) {
+          setPartidos(partidosJugados);
         }
+        const stats = await db.getAllAsync<Estadisticas_Partido>('SELECT * FROM Estadisticas_Jugador_Partido');
+        if (stats) {
+          setStats(stats);
+        }
+        if (stats.length > 0 && partidosJugados.length > 0) {
+          const partidosConStats = stats.map(stat => {
+            const partido = partidos.find(p => p.id === stat.partido);
+            if (partido) {
+              return { ...partido, ...stat };
+            }
+            return null;
+          }).filter(item => item !== null);
+          setPartidosJugados(partidosConStats);
+        }
+
       } catch (error) {
         console.error('Error fetching partidos from AsyncStorage:', error);
       }
     }
     fetchPartidos();
-  }, []);
+  }, [partidosJugados]);
 
   return (
     <>
       <TitleComponent title="Historial" />
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.statsContainer}>
-            {partidos.length > 0 ? (
-             <Text>Hola soy un placeholder</Text>
-            ) : (
+          {partidosJugados.length > 0 ? (
+            partidosJugados.map((partido: any) => (
+              <View>
+                <HistorialComponent data={partido} />
+              </View>
+            ))
+          ) : (
             <Text style={styles.statLabel}>No hay partidos jugados.</Text>
-            )}
+          )}
         </ScrollView>
+        <TouchableOpacity
+          style={[styles.helpButton, styles.refreshButton]}
+          onPress={() => [router.push('/historial'), setStats([]), setPartidos([])]}
+        >
+          <Text style={styles.helpButtonText}>
+            <FontAwesome name="refresh" size={22} />
+          </Text>
+        </TouchableOpacity>
       </View>
     </>
   );
@@ -78,5 +110,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text,
+  },
+  helpButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: Colors.menuBackground,
+    width: 75,
+    height: 75,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpButtonText: {
+    color: Colors.text,
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  refreshButton: {
+    bottom: 20,
+    left: 20,
   },
 });
