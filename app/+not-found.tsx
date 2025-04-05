@@ -1,19 +1,24 @@
-import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
-
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { Colors } from '@/constants/Colors';
+import { StyleSheet, Image, TextInput, TouchableOpacity, Alert, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
 
 export default function NotFoundScreen() {
+  const router = useRouter();
+  const logo = (require('@/assets/images/icon.png'));
+  
+
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <ThemedView style={styles.container}>
-        <ThemedText type="title">This screen doesn't exist.</ThemedText>
-        <Link href="/" style={styles.link}>
-          <ThemedText type="link">Go to home screen!</ThemedText>
-        </Link>
-      </ThemedView>
+      <View style={styles.container}>
+        <View style={styles.logo}>
+          <Image source={logo} />
+        </View>
+        <Text style={styles.title}> 404 - Página no encontrada </Text>
+        <TouchableOpacity onPress={() => router.push('/')}>
+          <Text style={styles.action}>Volver al inicio</Text>
+        </TouchableOpacity>
+      </View>
     </>
   );
 }
@@ -21,12 +26,27 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    backgroundColor: Colors.menuBackground,
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    height: '100%',
   },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
+  logo: {
+    height: 150,
+    width: 125,
+    resizeMode: 'contain',
+  },
+  title: {
+    color: Colors.text,
+    fontSize: 40,
+    marginBottom: 20,
+    fontWeight: 'bold',
+    fontFamily: 'Roboto',
+  },
+  
+  action: {
+    textDecorationLine: 'underline',
+    color: Colors.text,
+    fontSize: 14,
   },
 });

@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import React from 'react';
-import TitleComponent from '@/app/components/titleComponent';
+import TitleComponent from '@/components/titleComponent';
 import { router } from 'expo-router';
 
 export default function Index() {
@@ -113,6 +113,8 @@ const styles = StyleSheet.create({
   },
   enfasis: {
     color: Colors.buttonBackground,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
   helpButton: {
     position: 'absolute',

@@ -7,4 +7,5 @@ export const Colors = {
   menuBackground: '#00072D',
   buttonBackground: '#D8101D',
   appBackground: '#65655E',
+  editButton: '#ACBFA4',
 }

@@ -1,113 +1,269 @@
-import React, { useState } from 'react';
+import { useSQLiteContext } from "expo-sqlite";
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Modal } from 'react-native';
 import { Colors } from '@/constants/Colors';
-import { StyleSheet, TouchableOpacity, View, ScrollView, TextInput, Text, Image } from 'react-native';
-import TitleComponent from '@/app/components/titleComponent';
+import { Equipo, Torneo, Posicion, Jugador as JugadorType } from '@/constants/Types';
+import EquiposDropDownComponent from '@/components/equiposDropDownComponent';
+import TorneosDropDownComponent from '@/components/torneosDropDownComponent';
+import TitleComponent from '@/components/titleComponent';
+import JugadorComponent from '@/components/jugadorComponent';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { router } from "expo-router";
 
 export default function Jugador() {
-
   const [nombre, setNombre] = useState('');
-    const [equipo, setEquipo] = useState('');
-    const [edad, setEdad] = useState(0);
-    const [torneo, setTorneo] = useState('');
-    const [visible, setVisible] = useState(false);  
-    interface Posicion {
-      label: string;
-      value: string;
+  const [edad, setEdad] = useState(0);
+  const [equipo, setEquipo] = useState<Equipo | null>(null);
+  const [torneo, setTorneo] = useState<Torneo | null>(null);
+  const [jugadores, setJugadores] = useState<JugadorType[]>([]);
+  const [posiblesEquipos, setPosiblesEquipos] = useState<Equipo[]>([]);
+  const [posiblesTorneos, setPosiblesTorneos] = useState<Torneo[]>([]);
+  const [modalCrearJugador, setModalCrearJugador] = useState(false);
+  const posiciones: Posicion[] = [
+    { label: 'BA', value: 'Base' },
+    { label: 'ES', value: 'Escolta' },
+    { label: 'AL', value: 'Alero' },
+    { label: 'AP', value: 'Ala-Pivot' },
+    { label: 'P', value: 'Pivot' },
+  ];
+  const [posicion, setPosicion] = useState<Posicion | null>(null);
+
+  const db = useSQLiteContext();
+
+  const loadData = async () => {
+    const jugadoresResult = await db.getAllAsync<{
+      id: number;
+      nombre: string;
+      edad: number;
+      posicion: string;
+      equipo: number;
+      torneo: number;
+      equipo_nombre: string;
+      torneo_nombre: string;
+    }>(`
+        SELECT 
+            Jugador.id,
+            Jugador.nombre,
+            Jugador.edad,
+            Jugador.posicion,
+            Jugador.equipo,
+            Jugador.torneo,
+            Equipo.nombre AS equipo_nombre,
+            Torneo.nombre AS torneo_nombre
+        FROM Jugador
+        INNER JOIN Equipo ON Jugador.equipo = Equipo.id
+        INNER JOIN Torneo ON Jugador.torneo = Torneo.id
+    `);
+
+    console.log(jugadoresResult);
+
+    if (jugadoresResult?.length > jugadores.length) {
+      setJugadores((prevJugadores) => [
+        ...prevJugadores,
+        ...jugadoresResult.map((item) => {
+          const nuevaPosicion = posiciones.find(p => p.value === item.posicion) || null;
+
+          return {
+            id: item.id,
+            nombre: item.nombre,
+            edad: item.edad,
+            posicion: nuevaPosicion?.value || null,
+            equipo: {
+              id: item.equipo,
+              nombre: item.equipo_nombre
+            },
+            torneo: {
+              id: item.torneo,
+              nombre: item.torneo_nombre
+            }
+          };
+        })
+      ]);
     }
-    const posiciones: Posicion[] = [
-      { label: 'BA', value: 'Base' },
-      { label: 'ES', value: 'Escolta' },
-      { label: 'AL', value: 'Alero' },
-      { label: 'AP', value: 'Ala-Pivot' },
-      { label: 'P', value: 'Pivot' },
-    ];  
-    const [posicion, setPosicion] = useState<Posicion | null>(null);
-  
-    const cancelarCreacionJugador = () => {
-      setNombre('');
-      setEquipo('');
-      setEdad(0);
-      setTorneo('');
-      setVisible(false);
+
+    const equiposResult = await db.getAllAsync<{ id: number; nombre: string }>("SELECT * FROM Equipo");
+    setPosiblesEquipos(equiposResult);
+
+    const torneosResult = await db.getAllAsync<{ id: number; nombre: string }>("SELECT * FROM Torneo");
+    setPosiblesTorneos(torneosResult);
+  };
+
+  useEffect(() => {
+    try {
+      loadData();
+    } catch (e) {
+      console.error(e);
+    }
+  }, [jugadores]);
+
+  useEffect(() => {
+    const fetchPosiblesTorneos = async () => {
+      if (!equipo?.id) return;
+      try {
+        const torneosHabilitados = await db.getAllAsync<{ id: number, nombre: string }>(`
+          SELECT Torneo.id AS id, Torneo.nombre 
+          FROM Equipo_Torneo
+          INNER JOIN Torneo ON Equipo_Torneo.Torneo = Torneo.id
+          WHERE Equipo_Torneo.Equipo = ?`,
+          [equipo.id]
+        );
+        setPosiblesTorneos(torneosHabilitados);
+      } catch (error) {
+        console.error("Error al obtener los torneos habilitados:", error);
+      }
+    };
+    fetchPosiblesTorneos();
+  }, [equipo?.id]); // Optimización: solo depende de `equipo.id`
+
+
+  const agregarJugador = async () => {
+    if (nombre === '' || equipo?.id === 0 || edad === 0 || torneo?.id === 0 || posicion === null) {
+      alert('Por favor complete todos los campos.');
+      return;
+    }
+    await db.runAsync(
+      "INSERT INTO Jugador (nombre, edad, posicion, equipo, torneo) VALUES (?, ?, ?, ?, ?)",
+      [nombre, edad, posicion.value, equipo.id, torneo.id]
+    );
+
+    const nuevoJugadorId = await db.getFirstAsync<{ id: number }>(
+      "SELECT last_insert_rowid() AS id"
+    );
+
+    const nuevoJugador: JugadorType = {
+      id: nuevoJugadorId.id,
+      nombre,
+      edad,
+      posicion: posicion.value,
+      equipo: { id: equipo.id, nombre: equipo.nombre },
+      torneo: { id: torneo.id, nombre: torneo.nombre },
     };
 
-  return (
-  <>
-    <TitleComponent title="Jugador"/>    
-    <View style={styles.main}>
-    
-    {visible && (
-      <View style={styles.container}>
-        <TextInput
-        style={styles.input}
-        placeholder="Ingrese el Nombre del Jugador"
-        placeholderTextColor={Colors.text}
-        value={nombre}
-        onChangeText={(text) => setNombre(text)}
-        />
-        <TextInput
-        style={styles.input}
-        placeholder="Ingrese la Edad del Jugador"
-        placeholderTextColor={Colors.text}
-        value={edad > 0 ? String(edad) : ''}
-        onChangeText={(text) => setEdad(Number(text))}
-        keyboardType="numeric"
-        />
-        <View style={{ flexDirection: 'row' }}>
-        <View style={styles.posicion}>
-          {posiciones.map((pos) => (
-          <TouchableOpacity
-            key={pos.value}
-            style={styles.checkbox}
-            onPress={() => setPosicion(pos)}
-          >
-            <Text style={[styles.text, posicion?.value === pos.value && { color: Colors.selected }]}>
-            {pos.label}
-            </Text>
-          </TouchableOpacity>
-          ))}
-        </View>
-        </View>
-        <TextInput
-        style={styles.input}
-        placeholder="Selecciona el Equipo Del Jugador"
-        placeholderTextColor={Colors.text}
-        value={equipo}
-        onChangeText={(text) => setEquipo(text)}
-        />
-        <TextInput
-        style={styles.input}
-        placeholder="Selecciona el Torneo del Jugador"
-        placeholderTextColor={Colors.text}
-        value={torneo}
-        onChangeText={(text) => setTorneo(text)}
-        />
-    
-        {/* Por ahora son Inputs, mas adelante serán checkboxes con base de datos */}
-        <View style={styles.botones}>
-        <TouchableOpacity 
-          style={[styles.inputButton, {backgroundColor: Colors.barDownBackground}]}
-          onPress={cancelarCreacionJugador}
-          >
-          <Text style={styles.buttonText}>Cancelar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.inputButton}>
-          <Text style={styles.buttonText}>Crear jugador</Text>
-        </TouchableOpacity>
-        </View>
-      </View>
-    )}
-    </View>
-    <TouchableOpacity
-      style={styles.helpButton}
-      onPress={() => setVisible(true)}
-    >
-      <Text style={styles.helpButtonText}>+</Text>
-    </TouchableOpacity>
-  </>
-  )
-}
+    setJugadores([...jugadores, nuevoJugador]);
+    setNombre('');
+    setEdad(0);
+    setEquipo(null);
+    setTorneo(null);
+    setModalCrearJugador(false);
+  };
 
+
+  const toggleModalCrearJugador = () => setModalCrearJugador(!modalCrearJugador);
+
+
+  const cancelarCreacionJugador = () => {
+    setNombre('');
+    setEdad(0);
+    setEquipo(null);
+    setTorneo(null);
+    setModalCrearJugador(!modalCrearJugador);
+  };
+
+  return (
+    <>
+      <TitleComponent title="Jugador" />
+      <View style={styles.main}>
+        <ScrollView>
+          {jugadores.length > 0 ? (
+            jugadores.map((jugador) => (
+              <JugadorComponent
+                key={jugador.id}
+                id={jugador.id}
+                nombre={jugador.nombre}
+                edad={jugador.edad}
+                posicion={jugador.posicion}
+                equipo={jugador.equipo?.nombre}
+                torneo={jugador.torneo?.nombre}
+              />
+            ))
+          ) : (
+            <Text style={{ color: Colors.text }}>No hay jugadores creados.</Text>
+          )}
+        </ScrollView>
+        <Modal visible={modalCrearJugador} transparent animationType="slide">
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ingrese el Nombre del Jugador"
+                placeholderTextColor={Colors.text}
+                value={nombre}
+                onChangeText={(text) => setNombre(text)}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Ingrese la Edad del Jugador"
+                placeholderTextColor={Colors.text}
+                value={edad > 0 ? String(edad) : ''}
+                onChangeText={(text) => setEdad(Number(text))}
+                keyboardType="numeric"
+              />
+              <View style={{ flexDirection: 'row' }}>
+                <View style={styles.posicion}>
+                  {posiciones.map((pos) => (
+                    <TouchableOpacity
+                      key={pos.value}
+                      style={styles.checkbox}
+                      onPress={() => setPosicion(pos)}
+                    >
+                      <Text style={[styles.text, posicion?.value === pos.value && { color: Colors.selected }]}>
+                        {pos.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <View style={[styles.input, styles.dropdownContainer]}>
+                <EquiposDropDownComponent
+                  placeholder="Selecciona el Equipo del Jugador"
+                  data={posiblesEquipos}
+                  onSelect={(item) => setEquipo(item)}
+                />
+              </View>
+              {equipo?.id !== null && equipo?.id !== 0 && (
+                <View style={[styles.input, styles.dropdownContainer]}>
+                  <TorneosDropDownComponent
+                    placeholder="Selecciona el Torneo del Jugador"
+                    data={posiblesTorneos}
+                    onSelect={(item) => setTorneo(item)}
+                  />
+                </View>
+              )}
+              <View style={styles.botones}>
+                <TouchableOpacity
+                  style={[styles.inputButton, { backgroundColor: Colors.barDownBackground }]}
+                  onPress={() => cancelarCreacionJugador()}
+                >
+                  <Text style={styles.buttonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.inputButton}
+                  onPress={() => agregarJugador()}
+                >
+                  <Text style={styles.buttonText}>Crear jugador</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View >
+      <TouchableOpacity
+        style={[styles.helpButton, styles.refreshButton]}
+        onPress={() => [router.push('/jugador'), setJugadores([])]}
+      >
+        <Text style={styles.helpButtonText}>
+          <FontAwesome name="refresh" size={22} />
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.helpButton}
+        onPress={() => toggleModalCrearJugador()}
+      >
+        <Text style={styles.helpButtonText}>+</Text>
+      </TouchableOpacity>
+    </>
+  );
+}
 const styles = StyleSheet.create({
   main: {
     flex: 1,
@@ -118,9 +274,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.appBackground,
     paddingHorizontal: 20, // Agrega un poco de espacio lateral
   },
-  container: {
+  modalContainer: {
     flex: 1,
     width: '100%',
+    position: 'absolute',
     maxWidth: 400, // Limita el ancho máximo para pantallas grandes
     maxHeight: '80%',
     justifyContent: 'center',
@@ -133,6 +290,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5, // Sombra para Android
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   logo: {
     marginBottom: 20, // Espacio debajo del logo
@@ -149,6 +312,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     borderRadius: 8, // Bordes redondeados
     paddingHorizontal: 10, // Espacio interno
+  },
+  dropdownInput: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   botones: {
     flexDirection: 'row',
@@ -191,6 +358,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     color: Colors.text,
+    textAlign: 'center',
   },
   helpButton: {
     position: 'absolute',
@@ -207,5 +375,34 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 32,
     fontWeight: 'bold',
+  },
+  refreshButton: {
+    bottom: 20,
+    left: 20,
+  },
+  dropdownContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  dropdownLabel: {
+    fontSize: 16,
+    color: Colors.text,
+    marginBottom: 5,
+  },
+  dropdown: {
+    maxHeight: 150,
+    backgroundColor: Colors.menuBackground,
+    borderRadius: 8,
+    padding: 10,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.barDownBackground,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: Colors.text,
   },
 });
