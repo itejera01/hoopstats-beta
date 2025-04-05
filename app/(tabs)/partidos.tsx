@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Colors } from '@/constants/Colors';
 import { StyleSheet, TouchableOpacity, Text, View, ScrollView, TextInput, Modal } from 'react-native';
 import moment from 'moment';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Jugador, Torneo, Partido, Equipo } from '@/constants/Types';
 import TitleComponent from '@/components/titleComponent';
@@ -20,8 +19,8 @@ export default function Partidos() {
   const [equipoRival, setEquipoRival] = useState<Equipo | null>(null);
   const [equipoLocal, setEquipoLocal] = useState<Equipo | null>(null);
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState<Jugador | null>(null);
-  const [fecha, setFecha] = useState<Date | null>(null);
-  const [inicio, setInicio] = useState<Date | null>(null);
+  const [fecha, setFecha] = useState<string>('');
+  const [inicio, setInicio] = useState<string>('');
   const [modalCrearPartido, setModalCrearPartido] = useState(false);
   const [visibleFechaPicker, setVisibleFechaPicker] = useState(false);
   const [visibleInicioPicker, setVisibleInicioPicker] = useState(false);
@@ -147,8 +146,8 @@ export default function Partidos() {
       equipoRival: equipoRival,
       torneo: torneo,
       equipoLocal: equipoLocal,
-      fecha: moment(fecha || undefined).format("DD/MM/YYYY"),
-      inicio: moment(inicio || undefined).format("HH:mm"),
+      fecha,
+      inicio,
       jugado: 0,
     };
 
@@ -200,13 +199,18 @@ export default function Partidos() {
         <ScrollView>
           {partidos.length > 0 ? (
             partidos
-              .sort((a, b) => moment(a.fecha, 'DD/MM/YYYY').toDate().getTime() - moment(b.fecha, 'DD/MM/YYYY').toDate().getTime())
+              .slice()
+              .sort((a, b) => {
+                const fechaHoraA = moment(`${a.fecha} ${a.inicio}`, "YYYY-MM-DD HH:mm");
+                const fechaHoraB = moment(`${b.fecha} ${b.inicio}`, "YYYY-MM-DD HH:mm");
+                return fechaHoraA.isBefore(fechaHoraB) ? -1 : fechaHoraA.isAfter(fechaHoraB) ? 1 : 0;
+              })
               .map((partido) => (
                 <PartidoComponent
                   key={partido.id}
                   partido={partido.id}
-                  fecha={partido.fecha ?? "Fecha no disponible"}
-                  inicio={partido.inicio ?? "Hora no disponible"}
+                  fecha={partido.fecha}
+                  inicio={partido.inicio}
                   jugador={partido.jugador}
                   equipoJugador={partido.equipoJugador_nombre ?? "Equipo no definido"}
                   equipoRival={partido.equipoRival_nombre ?? "Rival no definido"}
@@ -223,26 +227,22 @@ export default function Partidos() {
             <View style={styles.modalContainer}>
               <View style={{ flexDirection: 'row' }}>
                 <View style={[styles.input, styles.inicioInput]}>
-                  <TouchableOpacity onPress={toggleFechaPicker}>
-                    <TextInput
-                      placeholder="Fecha"
-                      placeholderTextColor={Colors.text}
-                      value={fecha ? moment(fecha).format('DD/MM/YYYY') : ''}
-                      editable={false}
-                      style={styles.text}
-                    />
-                  </TouchableOpacity>
+                  <TextInput
+                    placeholder="Fecha"
+                    placeholderTextColor={Colors.text}
+                    value={fecha}
+                    onChangeText={(text) => setFecha(text)}
+                    style={styles.text}
+                  />
                 </View>
                 <View style={[styles.input, styles.inicioInput]}>
-                  <TouchableOpacity onPress={toggleInicioPicker}>
-                    <TextInput
-                      placeholder="Hora de Inicio"
-                      placeholderTextColor={Colors.text}
-                      editable={false}
-                      value={inicio ? moment(inicio).format('HH:mm') : ''}
-                      style={styles.text}
-                    />
-                  </TouchableOpacity>
+                  <TextInput
+                    placeholder="Hora de Inicio"
+                    placeholderTextColor={Colors.text}
+                    value={inicio}
+                    onChangeText={(text) => setInicio(text)}
+                    style={styles.text}
+                  />
                 </View>
               </View>
               <View style={styles.input}>
@@ -334,19 +334,6 @@ export default function Partidos() {
       >
         <Text style={styles.helpButtonText}>+</Text>
       </TouchableOpacity>
-
-      <DateTimePickerModal
-        isVisible={visibleFechaPicker}
-        mode="date"
-        onConfirm={(date) => setFecha(date)}
-        onCancel={toggleFechaPicker}
-      />
-      <DateTimePickerModal
-        isVisible={visibleInicioPicker}
-        mode="time"
-        onConfirm={(time) => setInicio(time)}
-        onCancel={toggleInicioPicker}
-      />
     </>
   );
 }

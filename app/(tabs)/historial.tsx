@@ -49,7 +49,7 @@ export default function Historial() {
         <ScrollView contentContainerStyle={styles.statsContainer}>
           {partidosJugados.length > 0 ? (
             partidosJugados.map((partido: any) => (
-              <View>
+              <View key={partido.id}>
                 <HistorialComponent data={partido} />
               </View>
             ))

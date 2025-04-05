@@ -3,7 +3,7 @@ import { Jugador } from '@/constants/Types';
 import EscudosComponent from '@/components/escudosComponent';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useSQLiteContext } from 'expo-sqlite';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Modal } from 'react-native';
 import React, { useState } from 'react';
 
 const numStatsColumns = 2;
@@ -26,6 +26,7 @@ export default function JugadorComponent(
     const fetchPartidos = async () => {
       const storedPartidos = await db.getAllAsync("SELECT * FROM Estadisticas_Jugador_Partido WHERE Jugador=?", [id])
       if (storedPartidos) {
+        console.log(storedPartidos);
         try {
           setPartidos(storedPartidos);
         } catch (error) {
@@ -182,7 +183,7 @@ export default function JugadorComponent(
     <View style={styles.container}>
       <TouchableOpacity style={styles.infoJugador} onPress={() => setShowStats(!showStats)}>
         <View>
-          <EscudosComponent teamName={equipo}/>
+          <EscudosComponent teamName={equipo} />
         </View>
         <View>
           <Text style={[styles.text, styles.nombre]}>{nombre}</Text>
@@ -196,17 +197,41 @@ export default function JugadorComponent(
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
-      {showStats && (
-        <View style={styles.statsContainer}>
-          <FlatList
-            data={data}
-            renderItem={renderStats}
-            numColumns={numStatsColumns}
-            keyExtractor={(item, index) => index.toString()} // Esto asigna una clave única
-          />
+      <Modal visible={showStats} transparent animationType="slide">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <View style={styles.statsContainer}>
+              <FlatList
+                data={data}
+                renderItem={renderStats}
+                numColumns={numStatsColumns}
+                keyExtractor={(item, index) => index.toString()} // Esto asigna una clave única
+              />
+              <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                <TouchableOpacity
+                  style={{
+                    marginTop: 10,
+                    backgroundColor: Colors.editButton,
+                    padding: 10,
+                    borderRadius: 10,
+                    width: '40%',
+                    alignItems: 'center',
+                  }}
+                  onPress={() => setShowStats(false)}
+                >
+                  <View style={{ flexDirection: 'row' }}>
+                    <FontAwesome name="close" size={20} color={Colors.menuBackground} />
+                    <Text style={[styles.text, { color: Colors.menuBackground, fontWeight: 'bold' }]}>
+                      Cerrar
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </View>
-      )}
-    </View>
+      </Modal >
+    </View >
   )
 }
 
@@ -276,7 +301,30 @@ const styles = StyleSheet.create({
   statsText: {
     fontSize: 16,
     fontWeight: 'bold',
-  }
+  },
+  modalContainer: {
+    flex: 1,
+    width: '100%',
+    position: 'absolute',
+    maxWidth: 400, // Limita el ancho máximo para pantallas grandes
+    maxHeight: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 15,
+    backgroundColor: Colors.menuBackground,
+    padding: 20, // Agrega espacio interno
+    shadowColor: '#000', // Sombra para darle profundidad
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5, // Sombra para Android
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 })
 
 
