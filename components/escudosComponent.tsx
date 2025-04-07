@@ -6,7 +6,7 @@ const escudos: { [key: string]: any } = {
   'Aguada': require('../assets/escudos/Aguada.png'),
   'Albatros': require('../assets/escudos/Albatros.png'),
   'Atenas': require('../assets/escudos/Atenas.png'),
-  'Ateneo': require('../assets/escudos/Ateneo_(maldonado).png'),
+  'Ateneo (maldonado)': require('../assets/escudos/Ateneo_maldonado.png'),
   'Auriblanco': require('../assets/escudos/Auriblanco.png'),
   'Bigua': require('../assets/escudos/Bigua.png'),
   'Bohemios': require('../assets/escudos/Bohemios.png'),
