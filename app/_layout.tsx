@@ -1,3 +1,4 @@
+import './global.css';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { SQLiteDatabase, SQLiteProvider } from 'expo-sqlite';
