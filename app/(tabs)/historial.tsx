@@ -3,14 +3,18 @@ import { Colors } from '@/constants/Colors';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import TitleComponent from '@/components/titleComponent';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Partido, Estadisticas_Partido } from '@/constants/Types';
+import { Partido, Estadisticas_Partido, Jugador } from '@/constants/Types';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { router } from 'expo-router';
 import HistorialComponent from '@/components/historialComponent';
+import JugadorDropDownComponent from '@/components/jugadorDropDownComponent';
 export default function Historial() {
   const [partidos, setPartidos] = useState<Partido[]>([]);
   const [stats, setStats] = useState<Estadisticas_Partido[]>([]);
   const [partidosJugados, setPartidosJugados] = useState([]);
+  const [jugadorFiltro, setJugadorFiltro] = useState<Jugador | null>(null);
+
+
 
   const db = useSQLiteContext();
   useEffect(() => {
@@ -46,13 +50,23 @@ export default function Historial() {
     <>
       <TitleComponent title="Historial" />
       <View style={styles.container}>
+        <View style={{ alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderColor: Colors.barDownBackground, width: '100%' }}>
+          <JugadorDropDownComponent
+            placeholder="Seleccionar Jugador"
+            onSelect={(item) => setJugadorFiltro(item)}
+          />
+        </View>
         <ScrollView contentContainerStyle={styles.statsContainer}>
           {partidosJugados.length > 0 ? (
-            partidosJugados.map((partido: any) => (
-              <View key={partido.id}>
-                <HistorialComponent data={partido} />
-              </View>
-            ))
+            partidosJugados
+              .filter((partido) =>
+                !jugadorFiltro || jugadorFiltro?.id === partido.jugador
+              )
+              .map((partido: any) => (
+                <View key={partido.id}>
+                  <HistorialComponent data={partido} />
+                </View>
+              ))
           ) : (
             <Text style={styles.statLabel}>No hay partidos jugados.</Text>
           )}

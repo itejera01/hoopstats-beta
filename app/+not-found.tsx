@@ -10,7 +10,7 @@ export default function NotFoundScreen() {
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={styles.container} className=''>
         <View style={styles.logo}>
           <Image source={logo} />
         </View>

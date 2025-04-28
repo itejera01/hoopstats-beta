@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/Colors';
-import { View, Text, StyleSheet, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Modal, TextInput, ScrollView } from 'react-native';
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import RelojComponent from './relojComponent';
@@ -11,6 +11,7 @@ export default function partidoComponent({
   partido,
   inicio,
   jugador,
+  nombreJugador,
   equipoJugador,
   equipoRival,
   torneo,
@@ -20,6 +21,7 @@ export default function partidoComponent({
   partido: number;
   inicio: string;
   jugador: number;
+  nombreJugador: string;
   equipoJugador: string;
   equipoRival: string;
   equipoLocal: string;
@@ -67,8 +69,9 @@ export default function partidoComponent({
           </View>
           <View>
             <View style={{ alignItems: 'center', marginTop: 10 }}>
-              <Text style={[styles.text, styles.partido]}>{torneo}</Text>
-              <Text style={[styles.text, styles.datosEquipo]}>{fecha} - {inicio}</Text>
+              <Text style={[styles.text, styles.partido]}>{fecha} - {inicio}</Text>
+              <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
+              <Text style={[styles.text, styles.datosEquipo]}>{nombreJugador}</Text>
             </View>
           </View>
         </View>
@@ -81,8 +84,10 @@ export default function partidoComponent({
                 setTiempoJugado(ref.getTime);
               }
             }} />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+            <View style={{ borderBlockColor: Colors.text, borderBottomWidth: 1, width: '100%', paddingTop: 10 }}></View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%', paddingTop: 10 }}>
               <View style={{ justifyContent: 'center', alignItems: 'center', width: '45%' }}>
+                <EscudosComponent teamName={equipoJugador} />
                 <TextInput
                   style={[styles.input]}
                   value={puntosEquipoJugador > 0 ? String(puntosEquipoJugador) : '0'}
@@ -91,11 +96,32 @@ export default function partidoComponent({
                   }}
                   keyboardType='numeric'
                 />
-              </View>
-              <View style={{ justifyContent: 'center', alignItems: 'center', width: '10%' }}>
-                <Text style={styles.text}>-</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '30%', backgroundColor: Colors.editButton }]}
+                    onPress={() => {
+                      setPuntosEquipoJugador(puntosEquipoJugador + 3);
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>+3</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '30%', backgroundColor: Colors.editButton }]}
+                    onPress={() => {
+                      setPuntosEquipoJugador(puntosEquipoJugador + 2);
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>+2</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '30%', backgroundColor: Colors.editButton }]}
+                    onPress={() => {
+                      setPuntosEquipoJugador(puntosEquipoJugador + 1);
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>+1</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={{ justifyContent: 'center', alignItems: 'center', width: '45%' }}>
+                <EscudosComponent teamName={equipoRival} />
                 <TextInput
                   style={styles.input}
                   value={puntosEquipoRival > 0 ? String(puntosEquipoRival) : '0'}
@@ -104,8 +130,32 @@ export default function partidoComponent({
                   }}
                   keyboardType='numeric'
                 />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '30%', backgroundColor: Colors.editButton }]}
+                    onPress={() => {
+                      setPuntosEquipoRival(puntosEquipoRival + 3);
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>+3</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '30%', backgroundColor: Colors.editButton }]}
+                    onPress={() => {
+                      setPuntosEquipoRival(puntosEquipoRival + 2);
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>+2</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.buttonStats, { width: '30%', backgroundColor: Colors.editButton }]}
+                    onPress={() => {
+                      setPuntosEquipoRival(puntosEquipoRival + 1);
+                    }}>
+                    <Text style={[styles.text, styles.statsText]}>+1</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
+            <View style={{ borderBlockColor: Colors.text, borderBottomWidth: 1, width: '100%', paddingTop: 10 }}></View>
             <View style={{ flexDirection: 'row' }}>
               <View style={styles.stats}>
                 <TouchableOpacity

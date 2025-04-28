@@ -1,3 +1,4 @@
+import '../assets/global.css';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { SQLiteDatabase, SQLiteProvider } from 'expo-sqlite';
@@ -119,9 +120,9 @@ export default function RootLayout() {
     <>
       <SQLiteProvider databaseName='hoopStat.db' onInit={createDbIfNeeded}>
         <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
-          <Stack.Screen name="+not-found" options={{ headerShown: false }}/>
-          <Stack.Screen name="settings" options={{ presentation: 'modal' }}/>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
         </Stack>
       </SQLiteProvider>
     </>

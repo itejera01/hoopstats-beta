@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { Equipo } from '@/constants/Types';
+import { Equipo, Jugador } from '@/constants/Types';
 import { useSQLiteContext } from 'expo-sqlite';
 import EscudosComponent from './escudosComponent';
 
@@ -11,6 +11,7 @@ export default function HistorialComponent(data: any) {
   const [equipoJugador, setEquipoJugador] = useState<Equipo | null>(null);
   const [equipoRival, setEquipoRival] = useState<Equipo | null>(null);
   const [equipoLocal, setEquipoLocal] = useState<Equipo | null>(null);
+  const [jugador, setJugador] = useState<Jugador | null>(null);
   const toggleModalVisible = () => setModalVisible(!modalVisible);
 
   const renderStats = ({ item }: { item: { label: string; value: number | string } }) => {
@@ -70,6 +71,19 @@ export default function HistorialComponent(data: any) {
         console.error('Error fetching equipo jugador:', error);
       }
     };
+    const fetchJugador = async () => {
+      try {
+        const jugadorArray = await db.getAllAsync<Jugador>('SELECT * FROM Jugador WHERE id = ?', [data.data.jugador]);
+        if (jugadorArray && jugadorArray.length > 0) {
+          const jugador = jugadorArray[0];
+          setJugador(jugador);
+          console.log(jugador);
+        }
+      } catch (error) {
+        console.error('Error fetching jugador:', error);
+      }
+    };
+    fetchJugador();
     fetchEquipoJugador();
     fetchEquipoRival();
     fetchEquipoLocal();
@@ -114,24 +128,35 @@ export default function HistorialComponent(data: any) {
               </>
             )}
           </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', width: '100%', padding: 10, marginTop: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: Colors.barDownBackground }}>
+            <View>
+              <Text style={[styles.text, styles.statsText]}>{data.data.puntos} PTS</Text>
+            </View>
+            <View style={{ justifyContent: 'center', alignItems: 'center', width: '30%' }}>
+              <Text style={[styles.text, styles.statsText]}>{data.data.rebotes} REB</Text>
+            </View>
+            <View>
+              <Text style={[styles.text, styles.statsText]}>{data.data.asistencias} ASI</Text>
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
-            <View style={styles.statsContainer}>
-              <View style={{ flexDirection: 'row' }}>
-                <View style={styles.stats}>
-                  <Text style={[styles.text, styles.statsText]}>
-                    Fecha: {data.data.fecha}
-                  </Text>
-                </View>
-                <View style={styles.stats}>
-                  <Text style={[styles.text, styles.statsText]}>
-                    Inicio: {data.data.inicio}
-                  </Text>
-                </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', paddingBottom: 10, width: '100%' }}>
+              <EscudosComponent teamName={equipoJugador?.nombre} />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.text, styles.statsTextTitle]}>{data.data.puntos_equipo_jugador}</Text>
+                <Text style={[styles.text, styles.statsTextTitle]}>-</Text>
+                <Text style={[styles.text, styles.statsTextTitle]}>{data.data.puntos_equipo_rival}</Text>
               </View>
+              <EscudosComponent teamName={equipoRival?.nombre} />
+            </View>
+            <View style={{ borderBottomColor: Colors.text, borderBottomWidth: 1, width: '100%', justifyContent: 'center', alignItems: 'center', padding: 10 }} >
+              <Text style={[styles.text, styles.statsText]}>{jugador?.nombre} - {data.data.fecha} - {data.data.inicio}</Text>
+            </View>
+            <View style={styles.statsContainer}>
               <View style={{ flexDirection: 'row' }}>
                 <View style={styles.stats}>
                   <Text style={[styles.text, styles.statsText]}>
@@ -225,8 +250,8 @@ export default function HistorialComponent(data: any) {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-    </View>
+      </Modal >
+    </View >
 
   );
 }
