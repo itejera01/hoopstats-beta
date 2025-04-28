@@ -123,7 +123,7 @@ const jugadorDropDownComponent: React.FC<jugadorDropDownComponentProps> = ({ pla
               </TouchableOpacity>
             )) : null}
           </ScrollView>
-          <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => {setModalVisible(!isModalVisible); setSelectedValue(null)}}>
             <Text style={styles.closeText}>Cerrar</Text>
           </TouchableOpacity>
         </View>

@@ -19,6 +19,7 @@ export default function Partidos() {
   const [equipoRival, setEquipoRival] = useState<Equipo | null>(null);
   const [equipoLocal, setEquipoLocal] = useState<Equipo | null>(null);
   const [jugadorSeleccionado, setJugadorSeleccionado] = useState<Jugador | null>(null);
+  const [jugadorFiltro, setJugadorFiltro] = useState<Jugador | null>(null);
   const [fecha, setFecha] = useState<string>('');
   const [inicio, setInicio] = useState<string>('');
   const [modalCrearPartido, setModalCrearPartido] = useState(false);
@@ -37,6 +38,7 @@ export default function Partidos() {
             P.inicio, 
             P.jugado, 
             J.id AS jugador, 
+            J.nombre as jugador_nombre,
             EJ.nombre AS equipoJugador_nombre, 
             ER.nombre AS equipoRival_nombre, 
             EL.nombre AS equipoLocal_nombre,
@@ -55,7 +57,7 @@ export default function Partidos() {
       }
     };
     fetchPartidos();
-  }, [partidos]);
+  }, [jugadorFiltro, partidos]);
 
   useEffect(() => {
     const fetchEquipos = async () => {
@@ -191,11 +193,17 @@ export default function Partidos() {
     setEquipoLocal(null);
     toggleModalCrearPartido();
   };
-
+  
   return (
     <>
       <TitleComponent title="Partidos" />
       <View style={styles.main}>
+        <View style={{ alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderColor: Colors.barDownBackground, width: '100%' }}>
+          <JugadorDropDownComponent
+            placeholder="Seleccionar Jugador"
+            onSelect={(item) => setJugadorFiltro(item)}
+          />
+        </View>
         <ScrollView>
           {partidos.length > 0 ? (
             partidos
@@ -205,6 +213,9 @@ export default function Partidos() {
                 const fechaHoraB = moment(`${b.fecha} ${b.inicio}`, "YYYY-MM-DD HH:mm");
                 return fechaHoraA.isBefore(fechaHoraB) ? -1 : fechaHoraA.isAfter(fechaHoraB) ? 1 : 0;
               })
+              .filter((partido) =>
+                !jugadorFiltro || jugadorFiltro?.id === partido.jugador
+              )
               .map((partido) => (
                 <PartidoComponent
                   key={partido.id}
@@ -212,6 +223,7 @@ export default function Partidos() {
                   fecha={partido.fecha}
                   inicio={partido.inicio}
                   jugador={partido.jugador}
+                  nombreJugador={partido.jugador_nombre ?? "Jugador no definido"}
                   equipoJugador={partido.equipoJugador_nombre ?? "Equipo no definido"}
                   equipoRival={partido.equipoRival_nombre ?? "Rival no definido"}
                   torneo={partido.torneo_nombre ?? "Torneo no especificado"}

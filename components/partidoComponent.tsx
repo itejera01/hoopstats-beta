@@ -11,6 +11,7 @@ export default function partidoComponent({
   partido,
   inicio,
   jugador,
+  nombreJugador,
   equipoJugador,
   equipoRival,
   torneo,
@@ -20,6 +21,7 @@ export default function partidoComponent({
   partido: number;
   inicio: string;
   jugador: number;
+  nombreJugador: string;
   equipoJugador: string;
   equipoRival: string;
   equipoLocal: string;
@@ -67,8 +69,9 @@ export default function partidoComponent({
           </View>
           <View>
             <View style={{ alignItems: 'center', marginTop: 10 }}>
-              <Text style={[styles.text, styles.partido]}>{torneo}</Text>
-              <Text style={[styles.text, styles.datosEquipo]}>{fecha} - {inicio}</Text>
+              <Text style={[styles.text, styles.partido]}>{fecha} - {inicio}</Text>
+              <Text style={[styles.text, styles.datosEquipo]}>{torneo}</Text>
+              <Text style={[styles.text, styles.datosEquipo]}>{nombreJugador}</Text>
             </View>
           </View>
         </View>
